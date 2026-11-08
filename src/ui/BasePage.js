@@ -25,10 +25,13 @@ export class BasePage {
 		this.locators = locatorFactory ? locatorFactory(page) : {};
 	}
 
-	/** Navigates relative to the project's baseURL (set in playwright.config.js), never a hardcoded host. */
+	/**
+	 * Navigates relative to the project's baseURL (set in playwright.config.js), never a hardcoded host.
+	 * Waits for domcontentloaded, not load: a stalled third-party script (ads, analytics) can hold
+	 * the load event for ever, and web-first assertions wait for the elements a test needs anyway.
+	 */
 	async goto(path = "/") {
-		await this.page.goto(path);
-		await this.page.waitForLoadState("domcontentloaded");
+		return this.page.goto(path, { waitUntil: "domcontentloaded" });
 	}
 
 	async click(locator) {
