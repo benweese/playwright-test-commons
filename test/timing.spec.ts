@@ -20,6 +20,7 @@ function fakeResponse(firstByte: number, lastByte: number, requestStart = 40): A
 	} as unknown as APIResponse<unknown>;
 }
 
+/** An API call that returns the given responses in order, one per call. */
 function calls(...responses: APIResponse<unknown>[]) {
 	let i = 0;
 	return async () => responses[i++] as APIResponse<unknown>;
