@@ -219,6 +219,8 @@ npm run build            # compile to dist/
 npm run format           # Prettier
 ```
 
+Developing commons needs Node 22.22.2+ on 22.x, or 24.15+, the range `eslint-plugin-jsdoc` supports. Installing it in a test repo needs only Node 20.
+
 CI (`.github/workflows/ci.yml`) runs lint, the Prettier check, the unit tests and the build on every push and pull request.
 
 **Documentation:** every export needs JSDoc (summary, parameters, return value, errors, and an example where useful). Lint fails on an undocumented export or a `@param` that doesn't match.
