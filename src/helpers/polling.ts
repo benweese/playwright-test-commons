@@ -20,15 +20,15 @@ export interface PollOptions {
  * @returns the body that satisfied the condition
  *
  * @example
- * const post = await pollUntil<Post>(
+ * // Posts.getPost is declared as this.get<Post>(...), so body is a Post
+ * const post = await pollUntil(
  *   () => Posts.getPost(id),
  *   (body) => body.status === "published",
  *   { message: "post to be published" }
  * );
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- callers name the body type when they need it
-export async function pollUntil<T = any>(
-	apiCall: () => Promise<APIResponse>,
+export async function pollUntil<T>(
+	apiCall: () => Promise<APIResponse<T>>,
 	condition: (body: T) => boolean,
 	{ message = "condition to be met", intervals = [500, 1000, 2000], timeout = 10000 }: PollOptions = {}
 ): Promise<T> {
@@ -42,7 +42,7 @@ export async function pollUntil<T = any>(
 					await response.dispose();
 					return false;
 				}
-				body = (await response.json()) as T;
+				body = await response.json();
 				await response.dispose();
 				return condition(body);
 			},

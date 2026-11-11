@@ -15,12 +15,12 @@ import { validateJsonSchema } from "../validation/validateJsonSchema.js";
 
 /**
  * Asserts 2xx, parses the JSON body and disposes the response.
- * Name the body's type when you need one: `getBody<ProductList>(response)`.
+ * The body's type comes from the response: a client method declared as
+ * `this.get<ProductList>(...)` makes this return a ProductList.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- callers name the body type when they need it
-export async function getBody<T = any>(response: APIResponse): Promise<T> {
+export async function getBody<T>(response: APIResponse<T>): Promise<T> {
 	await expect(response, `Expected 2xx, got ${response.status()}`).toBeOK();
-	const body = (await response.json()) as T;
+	const body = await response.json();
 	await response.dispose();
 	return body;
 }
@@ -31,7 +31,7 @@ export async function getBody<T = any>(response: APIResponse): Promise<T> {
  * @param options.schema - schema name to validate the error body against, e.g. "errors/error"
  */
 export async function errorCheck(
-	response: APIResponse,
+	response: APIResponse<unknown>,
 	status: number,
 	{ schema }: { schema?: string } = {}
 ): Promise<unknown> {
@@ -56,7 +56,11 @@ export async function errorCheck(
  * Calls apiCall `runs` times and asserts the average response time. The first call is
  * excluded because it includes connection setup.
  */
-export async function timingCheck(apiCall: () => Promise<APIResponse>, maxAverageMs = 1000, runs = 6): Promise<void> {
+export async function timingCheck(
+	apiCall: () => Promise<APIResponse<unknown>>,
+	maxAverageMs = 1000,
+	runs = 6
+): Promise<void> {
 	const times: number[] = [];
 	for (let i = 0; i < runs; i += 1) {
 		const started = Date.now();

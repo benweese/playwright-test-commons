@@ -76,8 +76,13 @@ export class ApiBase {
 	/**
 	 * Sends a request and returns the Playwright APIResponse. The caller asserts on it
 	 * (usually through getBody or errorCheck), which also disposes it.
+	 *
+	 * T types the response body, as Playwright's own request methods do: name it once in the
+	 * client method (`this.get<ProductList>("productsList")`) and getBody, pollUntil and
+	 * `response.json()` all return that type.
 	 */
-	async send(method: string, path: string, options: FetchOptions = {}): Promise<APIResponse> {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same default as Playwright's APIResponse<T>
+	async send<T = any>(method: string, path: string, options: FetchOptions = {}): Promise<APIResponse<T>> {
 		const url = this.uri(path);
 		this.log("REQUEST", `${method.toUpperCase()} ${url}`);
 		const payload = options.data ?? options.form;
@@ -87,7 +92,7 @@ export class ApiBase {
 
 		const context = await this.requestContext();
 		const started = Date.now();
-		const response = await context.fetch(url, {
+		const response = await context.fetch<T>(url, {
 			...options,
 			method: method.toUpperCase(),
 			headers: { ...this.resolveHeaders(), ...options.headers }
@@ -113,23 +118,28 @@ export class ApiBase {
 			: { data: payload as FetchOptions["data"] };
 	}
 
-	get(path: string, params?: FetchOptions["params"]): Promise<APIResponse> {
-		return this.send("get", path, { params });
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same default as Playwright's APIResponse<T>
+	get<T = any>(path: string, params?: FetchOptions["params"]): Promise<APIResponse<T>> {
+		return this.send<T>("get", path, { params });
 	}
 
-	post(path: string, payload?: unknown): Promise<APIResponse> {
-		return this.send("post", path, this.body(payload));
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same default as Playwright's APIResponse<T>
+	post<T = any>(path: string, payload?: unknown): Promise<APIResponse<T>> {
+		return this.send<T>("post", path, this.body(payload));
 	}
 
-	put(path: string, payload?: unknown): Promise<APIResponse> {
-		return this.send("put", path, this.body(payload));
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same default as Playwright's APIResponse<T>
+	put<T = any>(path: string, payload?: unknown): Promise<APIResponse<T>> {
+		return this.send<T>("put", path, this.body(payload));
 	}
 
-	patch(path: string, payload?: unknown): Promise<APIResponse> {
-		return this.send("patch", path, this.body(payload));
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same default as Playwright's APIResponse<T>
+	patch<T = any>(path: string, payload?: unknown): Promise<APIResponse<T>> {
+		return this.send<T>("patch", path, this.body(payload));
 	}
 
-	delete(path: string, payload?: unknown): Promise<APIResponse> {
-		return this.send("delete", path, this.body(payload));
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same default as Playwright's APIResponse<T>
+	delete<T = any>(path: string, payload?: unknown): Promise<APIResponse<T>> {
+		return this.send<T>("delete", path, this.body(payload));
 	}
 }

@@ -8,8 +8,6 @@
  * @module commons
  */
 
-export { createConfig } from "./config.js";
-export type { EnvironmentSettings, CreateConfigOptions, ResolvedConfig } from "./config.js";
 export { ApiBase } from "./api/ApiBase.js";
 export type { ApiBaseOptions, BodyType, FetchOptions, Headers } from "./api/ApiBase.js";
 export { TAGS, generateTestDescription, formatTestId } from "./helpers/testDescription.js";
