@@ -38,19 +38,21 @@ git config --global url."https://github.com/".insteadOf ssh://git@github.com/
 
 ## What's in it
 
-| Export                                                                    | What it does                                                                                                                                                                                     |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `createConfig(environments, { defaultEnv })`                              | Picks the environment from `TEST_ENV`, with `BASE_URL` / `API_BASE_URL` overrides for one-off runs                                                                                               |
-| `ApiBase`                                                                 | Base class for one-client-per-API-area. JSON or form bodies, per-request headers (for tokens set later), one reused request context, debug logging                                               |
-| `getBody(response)`                                                       | Asserts 2xx, parses JSON, disposes the response                                                                                                                                                  |
-| `errorCheck(response, status, { schema })`                                | Asserts an error status and optionally the error body's shape                                                                                                                                    |
-| `timingCheck(call, maxAverageMs)`                                         | Average response time over several calls, ignoring the first                                                                                                                                     |
-| `pollUntil(call, condition)`                                              | Waits for eventually-consistent APIs without fixed sleeps                                                                                                                                        |
-| `validateJsonSchema(name, body)`                                          | Validates against `schemas/<name>.schema.json` (ajv + formats) and checks every date field                                                                                                       |
-| `createJsonSchema` / `UPDATE_SCHEMAS=true`                                | Generates a strict schema from a real response for review                                                                                                                                        |
-| `isIsoDate`, `expectValidDate`, `expectDateBetween`, `expectSortedByDate` | Date checks that reject impossible dates like Feb 30                                                                                                                                             |
-| `BasePage`                                                                | Page object base: `goto`, `click`, `fill`, `expectVisible`, `expectUrl`, ...                                                                                                                     |
-| `generateTestDescription({ id, description, tags })`, `TAGS`              | Test titles like `#0012 \| search filters results @ui`. The id is a number, unique across the repo, that ties each test to its written plan scenario. Tags, not ids, say what kind of test it is |
+| Export                                                                    | What it does                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createConfig(environments, { defaultEnv })`                              | Picks the environment from `TEST_ENV`, with `BASE_URL` / `API_BASE_URL` overrides for one-off runs                                                                                                                   |
+| `ApiBase`                                                                 | Base class for one-client-per-API-area. JSON or form bodies, per-request headers (for tokens set later), one reused request context, debug logging                                                                   |
+| `getBody(response)`                                                       | Asserts 2xx, parses JSON, disposes the response                                                                                                                                                                      |
+| `errorCheck(response, status, { schema })`                                | Asserts an error status and optionally the error body's shape                                                                                                                                                        |
+| `timingCheck(call, maxAverageMs)`                                         | Average response time over several calls, ignoring the first                                                                                                                                                         |
+| `pollUntil(call, condition)`                                              | Waits for eventually-consistent APIs without fixed sleeps                                                                                                                                                            |
+| `validateJsonSchema(name, body)`                                          | Validates against `schemas/<name>.schema.json` (ajv + formats) and checks every date field                                                                                                                           |
+| `createJsonSchema` / `UPDATE_SCHEMAS=true`                                | Generates a strict schema from a real response for review                                                                                                                                                            |
+| `isIsoDate`, `expectValidDate`, `expectDateBetween`, `expectSortedByDate` | Date checks that reject impossible dates like Feb 30                                                                                                                                                                 |
+| `BasePage`                                                                | Page object base: `goto`, `click`, `fill`, `expectVisible`, `expectUrl`, ...                                                                                                                                         |
+| `generateTestDescription({ id, description, tags })`, `TAGS`              | Test titles like `#0012 \| search filters results @ui`. The id is a number, unique across the repo, that ties each test to its written plan scenario. Tags, not ids, say what kind of test it is                     |
+| `formatTestId(id)`                                                        | `12` → `#0012`, for plans and `--grep`                                                                                                                                                                               |
+| Types                                                                     | `EnvironmentSettings`, `ResolvedConfig`, `ApiBaseOptions`, `FetchOptions`, `LocatorFactory`, `ExpectOptions`, `Tag`, `TestDescription`, `DateOptions`, ... so test repos type their config, clients and page objects |
 
 ## Example
 
@@ -111,6 +113,8 @@ npm run lint             # ESLint + TypeScript type-check
 npx playwright test      # unit tests for the framework itself; no browser needed
 npm run build            # compile to dist/
 ```
+
+TypeScript stays on 6.x until typescript-eslint supports 7. Dependabot keeps everything else current.
 
 Releases are git tags (`v0.3.0`). Test repos pin a tag and upgrade on purpose.
 

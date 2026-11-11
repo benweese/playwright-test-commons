@@ -1,0 +1,26 @@
+version: 2
+updates:
+    - package-ecosystem: npm
+      directory: /
+      schedule:
+          interval: weekly
+      groups:
+          dev-tools:
+              patterns:
+                  [
+                      "eslint",
+                      "@eslint/*",
+                      "typescript-eslint",
+                      "eslint-config-prettier",
+                      "prettier",
+                      "globals",
+                      "@types/*"
+                  ]
+      ignore:
+          # typescript-eslint supports TypeScript up to 6.x; move to 7 when it does.
+          - dependency-name: typescript
+            update-types: ["version-update:semver-major"]
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+          interval: weekly
