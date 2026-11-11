@@ -15,7 +15,7 @@
  * @module testDescription
  */
 
-/** Tags select which Playwright project runs a test (see the consuming repo's playwright.config.js). */
+/** Tags select which Playwright project runs a test (see the consuming repo's playwright.config.ts). */
 export const TAGS = {
 	SMOKE: "@smoke", // fast checks that the site is up; run after every deploy
 	REGRESSION: "@regression", // full functional coverage
@@ -23,29 +23,30 @@ export const TAGS = {
 	UI: "@ui",
 	A11Y: "@a11y", // accessibility checks
 	SLOW: "@slow" // excluded from quick local runs
-};
+} as const;
+
+export type Tag = (typeof TAGS)[keyof typeof TAGS];
+
+export interface TestDescription {
+	/** The scenario's number from the plan, unique across the repo, e.g. 12 for #0012. */
+	id: number;
+	/** What the test checks, in plain words. */
+	description: string;
+	tags?: readonly Tag[];
+}
 
 /**
  * Formats a test id for titles, plans and --grep: 12 → "#0012".
  * Padding to a fixed width means "#0012" can never match "#00120" or "#0112" in a grep.
- *
- * @param {number} id - positive integer, unique across the test repo
- * @returns {string}
  */
-export function formatTestId(id) {
+export function formatTestId(id: number): string {
 	if (!Number.isInteger(id) || id < 1) {
 		throw new Error(`Test id ${JSON.stringify(id)} must be a positive whole number, e.g. 12`);
 	}
 	return `#${String(id).padStart(4, "0")}`;
 }
 
-/**
- * @param {object} params
- * @param {number} params.id - the scenario's number from the plan, unique across the repo, e.g. 12
- * @param {string} params.description - what the test checks, in plain words
- * @param {string[]} [params.tags=[]] - values from TAGS
- * @returns {string} e.g. "#0012 | shows the latest post first @ui @regression"
- */
-export function generateTestDescription({ id, description, tags = [] }) {
+/** @returns e.g. "#0012 | shows the latest post first @ui @regression" */
+export function generateTestDescription({ id, description, tags = [] }: TestDescription): string {
 	return `${formatTestId(id)} | ${description} ${tags.join(" ")}`.trim();
 }

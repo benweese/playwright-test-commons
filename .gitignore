@@ -3,3 +3,5 @@ test-results/
 playwright-report/
 .tmp/
 .DS_Store
+dist/
+*.tgz

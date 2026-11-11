@@ -10,33 +10,36 @@
  * @module response
  */
 
-import { expect } from "@playwright/test";
+import { expect, type APIResponse } from "@playwright/test";
 import { validateJsonSchema } from "../validation/validateJsonSchema.js";
 
 /**
- * @param {import("@playwright/test").APIResponse} response
- * @returns {Promise<any>} parsed JSON body
+ * Asserts 2xx, parses the JSON body and disposes the response.
+ * Name the body's type when you need one: `getBody<ProductList>(response)`.
  */
-export async function getBody(response) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- callers name the body type when they need it
+export async function getBody<T = any>(response: APIResponse): Promise<T> {
 	await expect(response, `Expected 2xx, got ${response.status()}`).toBeOK();
-	const body = await response.json();
+	const body = (await response.json()) as T;
 	await response.dispose();
 	return body;
 }
 
 /**
- * @param {import("@playwright/test").APIResponse} response
- * @param {number} status - expected HTTP status
- * @param {object} [options]
- * @param {string} [options.schema] - schema name to validate the error body against, e.g. "errors/error"
- * @returns {Promise<any>} parsed body (JSON if possible, otherwise text)
+ * Asserts an error status and returns the body (JSON if possible, otherwise text).
+ *
+ * @param options.schema - schema name to validate the error body against, e.g. "errors/error"
  */
-export async function errorCheck(response, status, { schema } = {}) {
+export async function errorCheck(
+	response: APIResponse,
+	status: number,
+	{ schema }: { schema?: string } = {}
+): Promise<unknown> {
 	expect.soft(response.status(), "HTTP status").toBe(status);
 	const text = await response.text();
 	await response.dispose();
 
-	let body = text;
+	let body: unknown = text;
 	try {
 		body = JSON.parse(text);
 	} catch {
@@ -52,13 +55,9 @@ export async function errorCheck(response, status, { schema } = {}) {
 /**
  * Calls apiCall `runs` times and asserts the average response time. The first call is
  * excluded because it includes connection setup.
- *
- * @param {() => Promise<import("@playwright/test").APIResponse>} apiCall
- * @param {number} [maxAverageMs=1000]
- * @param {number} [runs=6]
  */
-export async function timingCheck(apiCall, maxAverageMs = 1000, runs = 6) {
-	const times = [];
+export async function timingCheck(apiCall: () => Promise<APIResponse>, maxAverageMs = 1000, runs = 6): Promise<void> {
+	const times: number[] = [];
 	for (let i = 0; i < runs; i += 1) {
 		const started = Date.now();
 		const response = await apiCall();

@@ -17,12 +17,15 @@
 import { expect } from "@playwright/test";
 import { readFile } from "fs/promises";
 import path from "path";
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
+import { Ajv, type ValidateFunction } from "ajv";
+import addFormatsModule from "ajv-formats";
 import { createJsonSchema, schemaFilePath } from "./createJsonSchema.js";
-import { validateDatesInBody } from "./validateDates.js";
+import { validateDatesInBody, type DateOptions } from "./validateDates.js";
 
-const settings = {
+// ajv-formats is CommonJS: at runtime the default import is the plugin function itself.
+const addFormats = addFormatsModule as unknown as typeof addFormatsModule.default;
+
+const settings: { schemasDir: string; dateOptions: DateOptions } = {
 	schemasDir: path.join(process.cwd(), "schemas"),
 	dateOptions: {}
 };
@@ -32,14 +35,16 @@ const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
 
 /** Compiled validators, cached per schema name for the life of the worker. */
-const validators = new Map();
+const validators = new Map<string, ValidateFunction>();
 
-/**
- * @param {object} options
- * @param {string} [options.schemasDir] - absolute path to the schemas folder
- * @param {object} [options.dateOptions] - passed to validateDatesInBody (see validateDates.js)
- */
-export function configureSchemas({ schemasDir, dateOptions } = {}) {
+export interface SchemaSettings {
+	/** Absolute path to the schemas folder. */
+	schemasDir?: string;
+	/** Passed to validateDatesInBody on every validation. */
+	dateOptions?: DateOptions;
+}
+
+export function configureSchemas({ schemasDir, dateOptions }: SchemaSettings = {}): void {
 	if (schemasDir) {
 		settings.schemasDir = schemasDir;
 	}
@@ -49,23 +54,32 @@ export function configureSchemas({ schemasDir, dateOptions } = {}) {
 	validators.clear();
 }
 
-async function loadValidator(name) {
-	if (!validators.has(name)) {
+async function loadValidator(name: string): Promise<ValidateFunction> {
+	let validate = validators.get(name);
+	if (!validate) {
 		const file = schemaFilePath(settings.schemasDir, name);
-		const schema = JSON.parse(await readFile(file, "utf8"));
-		validators.set(name, ajv.compile(schema));
+		validate = ajv.compile(JSON.parse(await readFile(file, "utf8")));
+		validators.set(name, validate);
 	}
-	return validators.get(name);
+	return validate;
+}
+
+export interface ValidateOptions {
+	/** (Re)generate the schema from this body first. Never commit this. */
+	update?: boolean;
+	/** Also run validateDatesInBody. Default true. */
+	checkDates?: boolean;
 }
 
 /**
- * @param {string} name - schema name, e.g. "posts/getPost"
- * @param {unknown} body - parsed response body
- * @param {object} [options]
- * @param {boolean} [options.update=false] - (re)generate the schema from this body first
- * @param {boolean} [options.checkDates=true] - also run validateDatesInBody
+ * @param name - schema name, e.g. "posts/getPost"
+ * @param body - parsed response body
  */
-export async function validateJsonSchema(name, body, { update = false, checkDates = true } = {}) {
+export async function validateJsonSchema(
+	name: string,
+	body: unknown,
+	{ update = false, checkDates = true }: ValidateOptions = {}
+): Promise<void> {
 	if (update || process.env.UPDATE_SCHEMAS === "true") {
 		await createJsonSchema(settings.schemasDir, name, body);
 		validators.delete(name);

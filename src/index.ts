@@ -9,11 +9,16 @@
  */
 
 export { createConfig } from "./config.js";
+export type { EnvironmentSettings, CreateConfigOptions, ResolvedConfig } from "./config.js";
 export { ApiBase } from "./api/ApiBase.js";
+export type { ApiBaseOptions, BodyType, FetchOptions, Headers } from "./api/ApiBase.js";
 export { TAGS, generateTestDescription, formatTestId } from "./helpers/testDescription.js";
+export type { Tag, TestDescription } from "./helpers/testDescription.js";
 export { getBody, errorCheck, timingCheck } from "./helpers/response.js";
 export { pollUntil } from "./helpers/polling.js";
+export type { PollOptions } from "./helpers/polling.js";
 export { validateJsonSchema, configureSchemas } from "./validation/validateJsonSchema.js";
+export type { SchemaSettings, ValidateOptions } from "./validation/validateJsonSchema.js";
 export { createJsonSchema, schemaFilePath } from "./validation/createJsonSchema.js";
 export {
 	isIsoDate,
@@ -22,4 +27,6 @@ export {
 	expectSortedByDate,
 	validateDatesInBody
 } from "./validation/validateDates.js";
+export type { DateInput, DateOptions } from "./validation/validateDates.js";
 export { BasePage } from "./ui/BasePage.js";
+export type { LocatorFactory, ExpectOptions } from "./ui/BasePage.js";

@@ -8,20 +8,35 @@
  * @module ApiBase
  */
 
-import { request } from "@playwright/test";
+import { request, type APIRequestContext, type APIResponse } from "@playwright/test";
+
+export type Headers = Record<string, string>;
+export type BodyType = "json" | "form";
+/** Options Playwright's fetch accepts: params, data, form, multipart, headers, timeout, ... */
+export type FetchOptions = NonNullable<Parameters<APIRequestContext["fetch"]>[1]>;
+
+export interface ApiBaseOptions {
+	/** API root, e.g. config.apiBaseUrl */
+	baseUrl: string;
+	/**
+	 * Static headers, or a function called per request (use a function for auth tokens that
+	 * are set after the client is created, e.g. by a setup project).
+	 */
+	headers?: Headers | (() => Headers);
+	/** How post/put/patch/delete send their body: JSON or application/x-www-form-urlencoded. Default "json". */
+	bodyType?: BodyType;
+	/** Log request and response bodies. */
+	debug?: boolean;
+}
 
 export class ApiBase {
-	/**
-	 * @param {object} options
-	 * @param {string} options.baseUrl - API root, e.g. config.apiBaseUrl
-	 * @param {Record<string, string> | (() => Record<string, string>)} [options.headers] -
-	 *   static headers, or a function called per request (use a function for auth tokens that
-	 *   are set after the client is created, e.g. by a setup project)
-	 * @param {"json" | "form"} [options.bodyType="json"] - how post/put/patch/delete send their body:
-	 *   "json" (application/json) or "form" (application/x-www-form-urlencoded)
-	 * @param {boolean} [options.debug=false] - log request/response bodies
-	 */
-	constructor({ baseUrl, headers = {}, bodyType = "json", debug = false }) {
+	protected readonly baseUrl: string;
+	protected readonly headers: Headers | (() => Headers);
+	protected readonly bodyType: BodyType;
+	protected readonly debug: boolean;
+	private context: APIRequestContext | null = null;
+
+	constructor({ baseUrl, headers = {}, bodyType = "json", debug = false }: ApiBaseOptions) {
 		if (!["json", "form"].includes(bodyType)) {
 			throw new Error(`bodyType must be "json" or "form", got "${bodyType}"`);
 		}
@@ -29,18 +44,17 @@ export class ApiBase {
 		this.headers = headers;
 		this.bodyType = bodyType;
 		this.debug = debug;
-		this.context = null;
 	}
 
-	resolveHeaders() {
+	protected resolveHeaders(): Headers {
 		return typeof this.headers === "function" ? this.headers() : this.headers;
 	}
 
-	uri(path) {
-		return `${this.baseUrl}/${String(path).replace(/^\//, "")}`;
+	uri(path: string): string {
+		return `${this.baseUrl}/${path.replace(/^\//, "")}`;
 	}
 
-	log(label, value) {
+	protected log(label: string, value: unknown): void {
 		if (this.debug) {
 			console.log(`=================== ${label} ===================`);
 			console.log(typeof value === "string" ? value : JSON.stringify(value, null, 2));
@@ -48,13 +62,13 @@ export class ApiBase {
 	}
 
 	/** One request context per client (per worker), created on first use and reused. */
-	async requestContext() {
+	protected async requestContext(): Promise<APIRequestContext> {
 		this.context ??= await request.newContext();
 		return this.context;
 	}
 
 	/** Releases the request context. Optional: call it from an afterAll if a worker makes many clients. */
-	async dispose() {
+	async dispose(): Promise<void> {
 		await this.context?.dispose();
 		this.context = null;
 	}
@@ -62,12 +76,8 @@ export class ApiBase {
 	/**
 	 * Sends a request and returns the Playwright APIResponse. The caller asserts on it
 	 * (usually through getBody or errorCheck), which also disposes it.
-	 *
-	 * @param {string} method
-	 * @param {string} path - relative to baseUrl
-	 * @param {object} [options] - Playwright fetch options (params, data, form, multipart, headers, ...)
 	 */
-	async send(method, path, options = {}) {
+	async send(method: string, path: string, options: FetchOptions = {}): Promise<APIResponse> {
 		const url = this.uri(path);
 		this.log("REQUEST", `${method.toUpperCase()} ${url}`);
 		const payload = options.data ?? options.form;
@@ -94,30 +104,32 @@ export class ApiBase {
 	}
 
 	/** Wraps a body as `data` or `form`, depending on bodyType. */
-	body(payload) {
+	protected body(payload: unknown): FetchOptions {
 		if (payload === undefined) {
 			return {};
 		}
-		return this.bodyType === "form" ? { form: payload } : { data: payload };
+		return this.bodyType === "form"
+			? { form: payload as FetchOptions["form"] }
+			: { data: payload as FetchOptions["data"] };
 	}
 
-	get(path, params) {
+	get(path: string, params?: FetchOptions["params"]): Promise<APIResponse> {
 		return this.send("get", path, { params });
 	}
 
-	post(path, payload) {
+	post(path: string, payload?: unknown): Promise<APIResponse> {
 		return this.send("post", path, this.body(payload));
 	}
 
-	put(path, payload) {
+	put(path: string, payload?: unknown): Promise<APIResponse> {
 		return this.send("put", path, this.body(payload));
 	}
 
-	patch(path, payload) {
+	patch(path: string, payload?: unknown): Promise<APIResponse> {
 		return this.send("patch", path, this.body(payload));
 	}
 
-	delete(path, payload) {
+	delete(path: string, payload?: unknown): Promise<APIResponse> {
 		return this.send("delete", path, this.body(payload));
 	}
 }

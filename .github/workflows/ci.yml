@@ -15,6 +15,7 @@ jobs:
                   node-version-file: .nvmrc
                   cache: npm
             - run: npm ci
-            - run: npm run lint
+            - run: npm run lint # ESLint + type-check
             - run: npx prettier --check .
-            - run: npm test
+            - run: npx playwright test
+            - run: npm run build

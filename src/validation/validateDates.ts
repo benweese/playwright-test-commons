@@ -15,23 +15,29 @@
  */
 
 import { expect } from "@playwright/test";
-import dayjs from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
 import utc from "dayjs/plugin/utc.js";
 
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 
+export type DateInput = string | Date | Dayjs;
+
+export interface DateOptions {
+	/** Which keys are dates (default: ends in At/Date/_at/_date, or is date/timestamp). */
+	dateKeys?: RegExp;
+	/** dayjs format; omit for ISO 8601. */
+	format?: string;
+}
+
 const ISO_8601 = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
 
 /** Keys treated as dates by validateDatesInBody unless overridden. */
 const DEFAULT_DATE_KEY = /(At|Date|_at|_date)$|^(date|createdAt|updatedAt|publishedAt|timestamp)$/;
 
-/**
- * @param {unknown} value
- * @returns {boolean} true for a real ISO 8601 date or date-time (rejects 2026-02-30)
- */
-export function isIsoDate(value) {
+/** True for a real ISO 8601 date or date-time (rejects 2026-02-30). */
+export function isIsoDate(value: unknown): value is string {
 	if (typeof value !== "string" || !ISO_8601.test(value)) {
 		return false;
 	}
@@ -39,72 +45,70 @@ export function isIsoDate(value) {
 	return dayjs(value.slice(0, 10), "YYYY-MM-DD", true).isValid() && !Number.isNaN(Date.parse(value));
 }
 
-function parse(value, format) {
+function parse(value: unknown, format?: string): Dayjs {
+	if (typeof value !== "string") {
+		return dayjs("invalid");
+	}
 	return format ? dayjs(value, format, true) : isIsoDate(value) ? dayjs(value) : dayjs("invalid");
 }
 
-/**
- * @param {unknown} value
- * @param {object} [options]
- * @param {string} [options.format] - dayjs format; omit for ISO 8601
- * @param {string} [options.label="date"] - shown in the failure message
- */
-export function expectValidDate(value, { format, label = "date" } = {}) {
-	const ok = typeof value === "string" && parse(value, format).isValid();
-	expect.soft(ok, `${label} "${value}" is a valid ${format ?? "ISO 8601"} date`).toBe(true);
+export function expectValidDate(
+	value: unknown,
+	{ format, label = "date" }: { format?: string; label?: string } = {}
+): void {
+	const ok = parse(value, format).isValid();
+	expect.soft(ok, `${label} "${String(value)}" is a valid ${format ?? "ISO 8601"} date`).toBe(true);
 }
 
 /**
- * @param {string} value
- * @param {string | Date | dayjs.Dayjs} from - inclusive
- * @param {string | Date | dayjs.Dayjs} to - inclusive
- * @param {object} [options]
- * @param {string} [options.format]
- * @param {string} [options.label="date"]
+ * Asserts value is between from and to, inclusive.
  *
  * @example
  * // published within the last 7 days
  * expectDateBetween(post.publishedAt, dayjs().subtract(7, "day"), dayjs());
  */
-export function expectDateBetween(value, from, to, { format, label = "date" } = {}) {
+export function expectDateBetween(
+	value: unknown,
+	from: DateInput,
+	to: DateInput,
+	{ format, label = "date" }: { format?: string; label?: string } = {}
+): void {
 	const date = parse(value, format);
 	const start = dayjs(from);
 	const end = dayjs(to);
 	const ok = date.isValid() && !date.isBefore(start) && !date.isAfter(end);
-	expect.soft(ok, `${label} "${value}" is between ${start.toISOString()} and ${end.toISOString()}`).toBe(true);
+	expect
+		.soft(ok, `${label} "${String(value)}" is between ${start.toISOString()} and ${end.toISOString()}`)
+		.toBe(true);
 }
 
-/**
- * @param {object[]} items
- * @param {string} key - date field on each item
- * @param {"desc" | "asc"} [order="desc"]
- * @param {object} [options]
- * @param {string} [options.format]
- */
-export function expectSortedByDate(items, key, order = "desc", { format } = {}) {
+export function expectSortedByDate(
+	items: readonly Record<string, unknown>[],
+	key: string,
+	order: "desc" | "asc" = "desc",
+	{ format }: { format?: string } = {}
+): void {
 	for (let i = 1; i < items.length; i += 1) {
-		const previous = parse(items[i - 1][key], format);
-		const current = parse(items[i][key], format);
+		const before = items[i - 1]?.[key];
+		const after = items[i]?.[key];
+		const previous = parse(before, format);
+		const current = parse(after, format);
 		const ok = order === "desc" ? !current.isAfter(previous) : !current.isBefore(previous);
 		expect
 			.soft(
 				ok,
-				`items[${i}].${key} (${items[i][key]}) is ${order === "desc" ? "not after" : "not before"} items[${i - 1}].${key} (${items[i - 1][key]})`
+				`items[${i}].${key} (${String(after)}) is ${order === "desc" ? "not after" : "not before"} items[${i - 1}].${key} (${String(before)})`
 			)
 			.toBe(true);
 	}
 }
 
-/**
- * Walks a response body and checks every date-like field.
- *
- * @param {unknown} body
- * @param {object} [options]
- * @param {RegExp} [options.dateKeys] - which keys are dates (default: ends in At/Date, etc.)
- * @param {string} [options.format] - dayjs format; omit for ISO 8601
- * @param {string} [path] - internal, for failure messages
- */
-export function validateDatesInBody(body, { dateKeys = DEFAULT_DATE_KEY, format } = {}, path = "body") {
+/** Walks a response body and checks every date-like field. */
+export function validateDatesInBody(
+	body: unknown,
+	{ dateKeys = DEFAULT_DATE_KEY, format }: DateOptions = {},
+	path = "body"
+): void {
 	if (Array.isArray(body)) {
 		body.forEach((item, i) => validateDatesInBody(item, { dateKeys, format }, `${path}[${i}]`));
 		return;

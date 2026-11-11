@@ -1,13 +1,17 @@
 {
 	"name": "@benweese/playwright-test-commons",
-	"version": "0.2.0",
-	"description": "Reusable Playwright test framework layer: API client base class, response helpers, strict JSON schema and date validation, and a UI base page.",
+	"version": "0.3.0",
+	"description": "Reusable Playwright test framework layer in TypeScript: API client base class, response helpers, strict JSON schema and date validation, and a UI base page.",
 	"type": "module",
-	"main": "src/index.js",
+	"main": "dist/index.js",
 	"exports": {
-		".": "./src/index.js"
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
 	},
 	"files": [
+		"dist",
 		"src"
 	],
 	"repository": {
@@ -17,21 +21,25 @@
 	"author": "Ben Weese",
 	"license": "MIT",
 	"keywords": [
-		"playwright",
-		"testing",
-		"test-automation",
-		"json-schema",
 		"api-testing",
-		"page-object"
+		"json-schema",
+		"page-object",
+		"playwright",
+		"test-automation",
+		"testing",
+		"typescript"
 	],
 	"engines": {
 		"node": ">=20"
 	},
 	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.check.json",
 		"test": "playwright test",
-		"lint": "eslint .",
+		"lint": "eslint . && tsc -p tsconfig.check.json",
 		"lint:fix": "eslint . --fix",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"prepack": "npm run build"
 	},
 	"peerDependencies": {
 		"@playwright/test": ">=1.50.0"
@@ -45,9 +53,13 @@
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.65.0",
+		"@types/node": "^26.6.6",
 		"eslint": "^10.14.0",
 		"eslint-config-prettier": "^10.1.8",
 		"globals": "^17.14.0",
-		"prettier": "^3.9.10"
-	}
+		"prettier": "^3.9.10",
+		"typescript": "~6.0",
+		"typescript-eslint": "^8.72.2"
+	},
+	"types": "dist/index.d.ts"
 }

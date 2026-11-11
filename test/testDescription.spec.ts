@@ -14,7 +14,10 @@ test.describe("generateTestDescription", () => {
 
 	for (const id of [undefined, null, 0, -3, 1.5, "12", "#0012", "SMOKE-001", NaN]) {
 		test(`rejects id ${typeof id === "string" ? JSON.stringify(id) : String(id)}`, () => {
-			expect(() => generateTestDescription({ id, description: "x" })).toThrow(/positive whole number/);
+			// Deliberately wrong types: JavaScript callers and bad data still get a clear error.
+			expect(() => generateTestDescription({ id: id as unknown as number, description: "x" })).toThrow(
+				/positive whole number/
+			);
 		});
 	}
 });
