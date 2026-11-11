@@ -25,10 +25,16 @@ flowchart LR
 
 ```bash
 npm install -D @playwright/test typescript
-npm install https://github.com/benweese/playwright-test-commons/releases/download/v0.3.0/benweese-playwright-test-commons-0.3.0.tgz
+npm install github:benweese/playwright-test-commons#v0.3.0
 ```
 
-Each tag (`v0.3.0`) runs a release workflow that builds the package (compiled JavaScript, type definitions and source) and attaches it to the GitHub Release. Test repos install that file, so they get typed imports without compiling anything themselves. `@playwright/test` is a peer dependency, so the test repo picks the Playwright version.
+npm installs from the git tag and runs the package's `prepare` script, which compiles it to `dist/` with type definitions. The test repo gets typed imports without compiling anything itself. `@playwright/test` is a peer dependency, so the test repo picks the Playwright version.
+
+npm records GitHub dependencies in the lockfile as `git+ssh`. For CI or machines without a GitHub SSH key, point git at https before `npm ci`:
+
+```bash
+git config --global url."https://github.com/".insteadOf ssh://git@github.com/
+```
 
 ## What's in it
 
@@ -106,7 +112,7 @@ npx playwright test      # unit tests for the framework itself; no browser neede
 npm run build            # compile to dist/
 ```
 
-Releases are git tags (`v0.3.0`), built and attached to a GitHub Release by the release workflow. Test repos pin a release and upgrade on purpose.
+Releases are git tags (`v0.3.0`). Test repos pin a tag and upgrade on purpose.
 
 ## License
 
