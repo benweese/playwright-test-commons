@@ -114,7 +114,7 @@ npx playwright test      # unit tests for the framework itself; no browser neede
 npm run build            # compile to dist/
 ```
 
-TypeScript stays on 6.x until typescript-eslint supports 7. Dependabot keeps everything else current.
+TypeScript stays on 6.x until typescript-eslint supports 7. Dependabot keeps everything else current. `package.json` overrides `minimatch` to 11.x to fix [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) in ESLint's dependencies; remove the override once ESLint and typescript-eslint require minimatch 11 themselves.
 
 Releases are git tags (`v0.5.0`). Test repos pin a tag and upgrade on purpose.
 
