@@ -19,7 +19,6 @@ class ProductsClient extends ApiBase {
 declare const products: ProductsClient;
 declare const response: APIResponse<Product>;
 
-// getBody returns the type the client method declared, without naming it again.
 export const list: Promise<Product[]> = products.list().then(getBody);
 export const one: Promise<Product> = getBody(response);
 export const polled: Promise<Product[]> = pollUntil(

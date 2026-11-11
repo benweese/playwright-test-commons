@@ -1,4 +1,3 @@
-// ESLint's own config stays JavaScript: loading a .ts config needs an extra runtime loader.
 import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
