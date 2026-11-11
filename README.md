@@ -25,26 +25,26 @@ flowchart LR
 
 ```bash
 npm install -D @playwright/test
-npm install github:benweese/playwright-test-commons#v0.1.0
+npm install https://github.com/benweese/playwright-test-commons/archive/refs/tags/v0.2.0.tar.gz
 ```
 
 `@playwright/test` is a peer dependency, so the test repo picks the Playwright version.
 
 ## What's in it
 
-| Export                                                                    | What it does                                                                                                                                       |
-| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `createConfig(environments, { defaultEnv })`                              | Picks the environment from `TEST_ENV`, with `BASE_URL` / `API_BASE_URL` overrides for one-off runs                                                 |
-| `ApiBase`                                                                 | Base class for one-client-per-API-area. JSON or form bodies, per-request headers (for tokens set later), one reused request context, debug logging |
-| `getBody(response)`                                                       | Asserts 2xx, parses JSON, disposes the response                                                                                                    |
-| `errorCheck(response, status, { schema })`                                | Asserts an error status and optionally the error body's shape                                                                                      |
-| `timingCheck(call, maxAverageMs)`                                         | Average response time over several calls, ignoring the first                                                                                       |
-| `pollUntil(call, condition)`                                              | Waits for eventually-consistent APIs without fixed sleeps                                                                                          |
-| `validateJsonSchema(name, body)`                                          | Validates against `schemas/<name>.schema.json` (ajv + formats) and checks every date field                                                         |
-| `createJsonSchema` / `UPDATE_SCHEMAS=true`                                | Generates a strict schema from a real response for review                                                                                          |
-| `isIsoDate`, `expectValidDate`, `expectDateBetween`, `expectSortedByDate` | Date checks that reject impossible dates like Feb 30                                                                                               |
-| `BasePage`                                                                | Page object base: `goto`, `click`, `fill`, `expectVisible`, `expectUrl`, ...                                                                       |
-| `generateTestDescription({ id, description, tags })`, `TAGS`              | Test titles like `PROD-003 \| search filters results @ui`, tying each test to its written plan scenario                                            |
+| Export                                                                    | What it does                                                                                                                                                                                     |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `createConfig(environments, { defaultEnv })`                              | Picks the environment from `TEST_ENV`, with `BASE_URL` / `API_BASE_URL` overrides for one-off runs                                                                                               |
+| `ApiBase`                                                                 | Base class for one-client-per-API-area. JSON or form bodies, per-request headers (for tokens set later), one reused request context, debug logging                                               |
+| `getBody(response)`                                                       | Asserts 2xx, parses JSON, disposes the response                                                                                                                                                  |
+| `errorCheck(response, status, { schema })`                                | Asserts an error status and optionally the error body's shape                                                                                                                                    |
+| `timingCheck(call, maxAverageMs)`                                         | Average response time over several calls, ignoring the first                                                                                                                                     |
+| `pollUntil(call, condition)`                                              | Waits for eventually-consistent APIs without fixed sleeps                                                                                                                                        |
+| `validateJsonSchema(name, body)`                                          | Validates against `schemas/<name>.schema.json` (ajv + formats) and checks every date field                                                                                                       |
+| `createJsonSchema` / `UPDATE_SCHEMAS=true`                                | Generates a strict schema from a real response for review                                                                                                                                        |
+| `isIsoDate`, `expectValidDate`, `expectDateBetween`, `expectSortedByDate` | Date checks that reject impossible dates like Feb 30                                                                                                                                             |
+| `BasePage`                                                                | Page object base: `goto`, `click`, `fill`, `expectVisible`, `expectUrl`, ...                                                                                                                     |
+| `generateTestDescription({ id, description, tags })`, `TAGS`              | Test titles like `#0012 \| search filters results @ui`. The id is a number, unique across the repo, that ties each test to its written plan scenario. Tags, not ids, say what kind of test it is |
 
 ## Example
 
@@ -76,7 +76,7 @@ import { test } from "@playwright/test";
 import { generateTestDescription, TAGS, getBody, validateJsonSchema } from "@benweese/playwright-test-commons";
 import { Products } from "../../../api/ProductsClient.js";
 
-test(generateTestDescription({ id: "PROD-001", description: "lists products", tags: [TAGS.API] }), async () => {
+test(generateTestDescription({ id: 1, description: "lists products", tags: [TAGS.API] }), async () => {
 	const body = await getBody(await Products.list());
 	await validateJsonSchema("products/productsList", body);
 });

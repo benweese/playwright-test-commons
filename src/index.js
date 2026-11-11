@@ -10,7 +10,7 @@
 
 export { createConfig } from "./config.js";
 export { ApiBase } from "./api/ApiBase.js";
-export { TAGS, generateTestDescription } from "./helpers/testDescription.js";
+export { TAGS, generateTestDescription, formatTestId } from "./helpers/testDescription.js";
 export { getBody, errorCheck, timingCheck } from "./helpers/response.js";
 export { pollUntil } from "./helpers/polling.js";
 export { validateJsonSchema, configureSchemas } from "./validation/validateJsonSchema.js";

@@ -1,20 +1,30 @@
 import { test, expect } from "@playwright/test";
-import { generateTestDescription, TAGS } from "../src/index.js";
+import { generateTestDescription, formatTestId, TAGS } from "../src/index.js";
 
 test.describe("generateTestDescription", () => {
-	test("builds 'ID | description @tags'", () => {
-		expect(generateTestDescription({ id: "HOME-001", description: "loads", tags: [TAGS.UI, TAGS.SMOKE] })).toBe(
-			"HOME-001 | loads @ui @smoke"
+	test("builds '#0012 | description @tags'", () => {
+		expect(generateTestDescription({ id: 12, description: "loads", tags: [TAGS.UI, TAGS.SMOKE] })).toBe(
+			"#0012 | loads @ui @smoke"
 		);
 	});
 
 	test("works without tags", () => {
-		expect(generateTestDescription({ id: "API-0042", description: "lists items" })).toBe("API-0042 | lists items");
+		expect(generateTestDescription({ id: 1, description: "lists items" })).toBe("#0001 | lists items");
 	});
 
-	for (const id of [undefined, "", "home-001", "HOME-1", "HOME001", "1HOME-001"]) {
-		test(`rejects id ${JSON.stringify(id)}`, () => {
-			expect(() => generateTestDescription({ id, description: "x" })).toThrow(/must look like AREA-001/);
+	for (const id of [undefined, null, 0, -3, 1.5, "12", "#0012", "SMOKE-001", NaN]) {
+		test(`rejects id ${typeof id === "string" ? JSON.stringify(id) : String(id)}`, () => {
+			expect(() => generateTestDescription({ id, description: "x" })).toThrow(/positive whole number/);
 		});
 	}
+});
+
+test.describe("formatTestId", () => {
+	test("pads to four digits", () => {
+		expect([1, 12, 345, 6789].map(formatTestId)).toEqual(["#0001", "#0012", "#0345", "#6789"]);
+	});
+
+	test("keeps ids above 9999 whole", () => {
+		expect(formatTestId(12345)).toBe("#12345");
+	});
 });
