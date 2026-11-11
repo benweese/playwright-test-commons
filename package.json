@@ -1,6 +1,6 @@
 {
 	"name": "@benweese/playwright-test-commons",
-	"version": "0.5.0",
+	"version": "0.5.1",
 	"description": "Reusable Playwright test framework layer in TypeScript: API client base class, response helpers, strict JSON schema and date validation, and a UI base page.",
 	"type": "module",
 	"main": "dist/index.js",
@@ -56,6 +56,7 @@
 		"@types/node": "^26.6.6",
 		"eslint": "^10.14.0",
 		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-jsdoc": "^65.4.5",
 		"globals": "^17.14.0",
 		"prettier": "^3.9.10",
 		"typescript": "~6.0",

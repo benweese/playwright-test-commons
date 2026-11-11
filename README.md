@@ -25,7 +25,7 @@ flowchart LR
 
 ```bash
 npm install -D @playwright/test typescript
-npm install github:benweese/playwright-test-commons#v0.5.0
+npm install github:benweese/playwright-test-commons#v0.5.1
 ```
 
 npm installs from the git tag and runs the package's `prepare` script, which compiles it to `dist/` with type definitions. The test repo gets typed imports without compiling anything itself. `@playwright/test` (1.65 or later) is a peer dependency, so the test repo picks the Playwright version.
@@ -109,14 +109,16 @@ test(generateTestDescription({ id: 1, description: "lists products", tags: [TAGS
 
 ```bash
 npm install
-npm run lint             # ESLint + TypeScript type-check
+npm run lint             # ESLint (including JSDoc rules) + TypeScript type-check
 npx playwright test      # unit tests for the framework itself; no browser needed
 npm run build            # compile to dist/
 ```
 
 TypeScript stays on 6.x until typescript-eslint supports 7. Dependabot keeps everything else current. `package.json` overrides `minimatch` to 11.x to fix [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) in ESLint's dependencies; remove the override once ESLint and typescript-eslint require minimatch 11 themselves.
 
-Releases are git tags (`v0.5.0`). Test repos pin a tag and upgrade on purpose.
+Every export has JSDoc (summary, parameters, return value, errors and an example where useful), so editors show it on hover. Lint fails on an undocumented export or a `@param` that doesn't match.
+
+Releases are git tags (`v0.5.1`). Test repos pin a tag and upgrade on purpose.
 
 ## License
 

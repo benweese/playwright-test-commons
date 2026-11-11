@@ -1,11 +1,10 @@
 /**
- * Public surface of @benweese/playwright-test-commons.
+ * Public API of `@benweese/playwright-test-commons`.
  *
- * This barrel is curated on purpose: a new file is NOT public until its export is added here.
- * Nothing in this package does work at import time (no network, no file reads), so importing
- * it is always safe and cheap.
+ * Only what is exported here is public; a new file stays internal until it is added. Nothing
+ * runs at import time (no network, no file reads), so importing the package is always safe.
  *
- * @module commons
+ * @module playwright-test-commons
  */
 
 export { ApiBase } from "./api/ApiBase.js";
@@ -26,6 +25,6 @@ export {
 	expectSortedByDate,
 	validateDatesInBody
 } from "./validation/validateDates.js";
-export type { DateInput, DateOptions } from "./validation/validateDates.js";
+export type { DateInput, DateOptions, DateCheckOptions } from "./validation/validateDates.js";
 export { BasePage } from "./ui/BasePage.js";
 export type { LocatorFactory, ExpectOptions } from "./ui/BasePage.js";

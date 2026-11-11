@@ -1,15 +1,9 @@
 /**
  * JSON Schema validation for API responses.
  *
- * Schemas live as files: <schemasDir>/<name>.schema.json, where name can include folders,
- * e.g. "posts/getPost" → schemas/posts/getPost.schema.json. schemasDir defaults to
- * `<cwd>/schemas` and can be changed once with configureSchemas().
- *
- * Every validation also runs validateDatesInBody, so date fields are checked for free.
- *
- * Creating a schema for a new endpoint: call with { update: true } once (or run the tests
- * with UPDATE_SCHEMAS=true), review the generated file, commit it, then remove the flag.
- * Leaving the flag on rewrites the schema from every response and hides real changes.
+ * Schemas are files named `<schemasDir>/<name>.schema.json`, where the name can include
+ * folders: `"posts/getPost"` → `schemas/posts/getPost.schema.json`. `schemasDir` defaults to
+ * `<cwd>/schemas`; set it once with {@link configureSchemas}.
  *
  * @module validateJsonSchema
  */
@@ -30,20 +24,29 @@ const settings: { schemasDir: string; dateOptions: DateOptions } = {
 	dateOptions: {}
 };
 
-// allErrors: report every mismatch at once, so one run shows the whole picture.
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
 
-/** Compiled validators, cached per schema name for the life of the worker. */
+/** Compiled validators by schema name, kept for the life of the worker. */
 const validators = new Map<string, ValidateFunction>();
 
+/** Settings for {@link configureSchemas}. */
 export interface SchemaSettings {
 	/** Absolute path to the schemas folder. */
 	schemasDir?: string;
-	/** Passed to validateDatesInBody on every validation. */
+	/** Passed to `validateDatesInBody` on every validation, e.g. a non-ISO date format. */
 	dateOptions?: DateOptions;
 }
 
+/**
+ * Sets where schemas live and how dates are checked. Call it once, from the test repo's config.
+ * Clears the cache of compiled schemas.
+ *
+ * @param settings - see {@link SchemaSettings}; omitted settings keep their current value
+ *
+ * @example
+ * configureSchemas({ schemasDir: path.join(root, "schemas") });
+ */
 export function configureSchemas({ schemasDir, dateOptions }: SchemaSettings = {}): void {
 	if (schemasDir) {
 		settings.schemasDir = schemasDir;
@@ -54,6 +57,7 @@ export function configureSchemas({ schemasDir, dateOptions }: SchemaSettings = {
 	validators.clear();
 }
 
+/** Loads and compiles a schema the first time it is used, then returns the cached validator. */
 async function loadValidator(name: string): Promise<ValidateFunction> {
 	let validate = validators.get(name);
 	if (!validate) {
@@ -64,16 +68,30 @@ async function loadValidator(name: string): Promise<ValidateFunction> {
 	return validate;
 }
 
+/** Settings for {@link validateJsonSchema}. */
 export interface ValidateOptions {
-	/** (Re)generate the schema from this body first. Never commit this. */
+	/** Generate the schema from this body first. For new endpoints only; never commit it. Default `false`. */
 	update?: boolean;
-	/** Also run validateDatesInBody. Default true. */
+	/** Also check every date-like field. Default `true`. */
 	checkDates?: boolean;
 }
 
 /**
- * @param name - schema name, e.g. "posts/getPost"
- * @param body - parsed response body
+ * Asserts (soft) that a body matches its schema, and that every date-like field holds a valid
+ * date. Every mismatch is logged, not just the first.
+ *
+ * For a new endpoint, run once with `{ update: true }` (or `UPDATE_SCHEMAS=true` for a whole
+ * run) to generate the schema from the real response. Review it, commit it, then remove the
+ * flag: left on, it rewrites the schema from every response and hides real changes.
+ *
+ * @param name - schema name, e.g. `"posts/getPost"`
+ * @param body - the parsed response body
+ * @param options - see {@link ValidateOptions}
+ * @throws Error if the schema file doesn't exist or can't be read
+ *
+ * @example
+ * const body = await getBody(await Posts.list());
+ * await validateJsonSchema("posts/listPosts", body);
  */
 export async function validateJsonSchema(
 	name: string,
@@ -90,7 +108,6 @@ export async function validateJsonSchema(
 	if (!valid) {
 		console.error(`Schema "${name}" errors:\n${JSON.stringify(validate.errors, null, 2)}`);
 	}
-	// Soft, so the rest of the test still runs and reports its own failures.
 	expect.soft(valid, `Response matches schema "${name}"`).toBe(true);
 
 	if (checkDates) {

@@ -1,10 +1,5 @@
 /**
- * Generates a JSON Schema file from a real response body.
- *
- * The generated schema is strict on purpose: every object gets additionalProperties: false,
- * so a new or renamed field fails the test until the schema is reviewed. Fields that were
- * null in the sample become ["null", "string"], since one sample can't show the real type.
- * Review and tighten generated schemas by hand (enums, formats, required fields).
+ * Generates JSON Schema files from real response bodies.
  *
  * @module createJsonSchema
  */
@@ -20,10 +15,14 @@ function isNode(value: unknown): value is SchemaNode {
 }
 
 /**
- * Resolves the file for a schema name, refusing anything that escapes the schemas folder.
- * The name comes from test code, but it still builds a filesystem path, so it's sanitized.
+ * Resolves the file for a schema name. The name comes from test code but still becomes a file
+ * path, so it is sanitized: `..` is removed and characters other than letters, digits, `/`,
+ * `_` and `-` become `_`.
  *
- * @param name - e.g. "posts/getPost"
+ * @param schemasDir - the schemas folder
+ * @param name - schema name, e.g. `"posts/getPost"`
+ * @returns the absolute path, e.g. `<schemasDir>/posts/getPost.schema.json`
+ * @throws Error if the name resolves outside `schemasDir`
  */
 export function schemaFilePath(schemasDir: string, name: string): string {
 	const safe = name.replace(/\.\./g, "").replace(/[^a-zA-Z0-9/_-]/g, "_");
@@ -35,6 +34,7 @@ export function schemaFilePath(schemasDir: string, name: string): string {
 	return file;
 }
 
+/** One sample can't show a null field's real type, so allow null or a string. */
 function nullToNullableString(node: unknown): void {
 	if (isNode(node)) {
 		if (node.type === "null") {
@@ -44,6 +44,7 @@ function nullToNullableString(node: unknown): void {
 	}
 }
 
+/** Sets `additionalProperties: false` on every object, so new or renamed fields fail validation. */
 function closeObjects(node: unknown): void {
 	if (isNode(node)) {
 		if (node.type === "object") {
@@ -53,6 +54,19 @@ function closeObjects(node: unknown): void {
 	}
 }
 
+/**
+ * Writes a strict JSON Schema (draft-07) inferred from a response body. Every object gets
+ * `additionalProperties: false`, and fields that were null become `["null", "string"]`.
+ * Review the file and tighten it by hand (required fields, enums, formats) before committing.
+ *
+ * Usually called through `validateJsonSchema(name, body, { update: true })` or
+ * `UPDATE_SCHEMAS=true`, not directly.
+ *
+ * @param schemasDir - the schemas folder
+ * @param name - schema name, e.g. `"posts/getPost"`
+ * @param body - a real response body to infer the schema from
+ * @throws Error if the name resolves outside `schemasDir`
+ */
 export async function createJsonSchema(schemasDir: string, name: string, body: unknown): Promise<void> {
 	const file = schemaFilePath(schemasDir, name);
 	const schema = structuredClone(createSchema(body)) as SchemaNode;
