@@ -33,7 +33,7 @@ flowchart LR
 
 ```bash
 npm install -D @playwright/test typescript
-npm install github:benweese/playwright-test-commons#v0.5.1
+npm install github:benweese/playwright-test-commons#v0.6.0
 ```
 
 npm installs from the git tag and runs the package's `prepare` script, which compiles it to `dist/` with type definitions, so the test repo gets typed imports without compiling anything itself.
@@ -137,6 +137,25 @@ export class LoginPage extends BasePage<LoginLocators> {
 }
 ```
 
+### Check test ids
+
+The package installs a `check-test-ids` command. Run it from the test repo, for example as part of lint:
+
+```json
+"scripts": {
+	"lint": "eslint . && tsc && check-test-ids",
+	"check:ids": "check-test-ids"
+}
+```
+
+It fails, listing each problem, if:
+
+- a test has no id (its title isn't built with `generateTestDescription`)
+- an id is used more than once anywhere in the repo (Playwright only catches duplicate titles within one file)
+- a test runs in no project, usually because it's missing the tag a project selects on
+
+Otherwise it prints the number of ids and the highest one, which is where the next new test's id starts. It reads `playwright.config.ts` in the current directory; pass another path as the first argument. It lists the tests twice with Playwright, once with the repo's projects and once with every test file, so it needs no setup and works with any project layout.
+
 ### Everything it exports
 
 | Export                                                                                                                                                                                                                                    | What it does                                                                                                                                                                                                |
@@ -155,6 +174,7 @@ export class LoginPage extends BasePage<LoginLocators> {
 | `BasePage`                                                                                                                                                                                                                                | Page object base: `goto`, `click`, `fill`, `selectOption`, `getText`, `getAllTexts`, `expectVisible`, `expectHidden`, `expectText`, `expectUrl`, `searchParams`                                             |
 | `generateTestDescription({ id, description, tags })`, `TAGS`                                                                                                                                                                              | Test titles like `#0012 \| search filters results @ui`. The id is a number, unique across the test repo, that ties each test to its plan scenario. Tags say what kind of test it is                         |
 | `formatTestId(id)`                                                                                                                                                                                                                        | `12` → `#0012`, for plans and `--grep`                                                                                                                                                                      |
+| `check-test-ids [config]` (command)                                                                                                                                                                                                       | Fails on a missing id, a duplicate id or a test no project runs (see above)                                                                                                                                 |
 | Types: `ApiBaseOptions`, `FetchOptions`, `LocatorFactory`, `ExpectOptions`, `Tag`, `TestDescription`, `TimingOptions`, `TimingResult`, `PollOptions`, `SchemaSettings`, `ValidateOptions`, `DateOptions`, `DateCheckOptions`, `DateInput` | For typing clients, page objects and options in the test repo                                                                                                                                               |
 
 Every export has JSDoc, so editors show the full description, parameters and examples on hover.
@@ -171,6 +191,8 @@ src/
   validation/createJsonSchema.ts  createJsonSchema, schemaFilePath
   validation/validateDates.ts     date checks
   ui/BasePage.ts                  base class for page objects
+  tools/checkTestIds.ts           the id rules behind check-test-ids
+  bin/check-test-ids.ts           the check-test-ids command
   index.ts                        the public API: only what is exported here is public
 test/                             unit tests (run by Playwright, no browser) and typing.check.ts (compile-time checks)
 dist/                             build output (git-ignored; built on install by the prepare script)
@@ -206,7 +228,7 @@ CI (`.github/workflows/ci.yml`) runs lint, the Prettier check, the unit tests an
 - TypeScript is held at 6.x until typescript-eslint supports 7.
 - `package.json` overrides `minimatch` to 11.x to fix [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) in ESLint's dependencies. Remove the override once ESLint and typescript-eslint require minimatch 11 themselves.
 
-**Releasing:** bump `version` in `package.json`, push to `main`, then tag it (`git tag -a v0.5.2 -m v0.5.2 && git push origin v0.5.2`). Test repos pin a tag and upgrade on purpose.
+**Releasing:** bump `version` in `package.json`, push to `main`, then tag it (`git tag -a v0.6.1 -m v0.6.1 && git push origin v0.6.1`). Test repos pin a tag and upgrade on purpose.
 
 ## License
 
