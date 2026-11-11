@@ -13,6 +13,7 @@ export type { ApiBaseOptions, BodyType, FetchOptions, Headers } from "./api/ApiB
 export { TAGS, generateTestDescription, formatTestId } from "./helpers/testDescription.js";
 export type { Tag, TestDescription } from "./helpers/testDescription.js";
 export { getBody, errorCheck, timingCheck } from "./helpers/response.js";
+export type { TimingOptions, TimingResult } from "./helpers/response.js";
 export { pollUntil } from "./helpers/polling.js";
 export type { PollOptions } from "./helpers/polling.js";
 export { validateJsonSchema, configureSchemas } from "./validation/validateJsonSchema.js";

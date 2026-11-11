@@ -3,7 +3,7 @@
  *
  * - getBody: assert 2xx, parse JSON, dispose.
  * - errorCheck: assert an error status, parse the body, optionally validate it against a schema.
- * - timingCheck: average response time over several calls.
+ * - timingCheck: average response time over several calls, from Playwright's resource timing.
  *
  * Don't add a separate `expect(response.status()).toBe(200)` next to getBody; it already checks.
  *
@@ -52,24 +52,61 @@ export async function errorCheck(
 	return body;
 }
 
+export interface TimingOptions {
+	/** Calls to measure. Default 5. */
+	runs?: number;
+	/**
+	 * Calls made first and not measured. Default 1: a server is often slower on its first request
+	 * (cold caches), even once connection setup is excluded.
+	 */
+	warmup?: number;
+}
+
+export interface TimingResult {
+	/** Average of `durations`. */
+	averageMs: number;
+	/** Request sent → last byte received, per measured call. Excludes DNS, TCP and TLS setup. */
+	durations: number[];
+	/** Request sent → first byte received (roughly the server's processing time), per measured call. */
+	timeToFirstByte: number[];
+}
+
 /**
- * Calls apiCall `runs` times and asserts the average response time. The first call is
- * excluded because it includes connection setup.
+ * Measures `runs` calls with Playwright's resource timing (`response.timing()`) and asserts
+ * their average. Each call is timed from the request being sent to the last byte arriving,
+ * so DNS lookup, connection and TLS setup never count against the API.
+ *
+ * @example
+ * await timingCheck(() => Products.list(), 800);
+ * const { timeToFirstByte } = await timingCheck(() => Products.search("top"), 1000, { runs: 10 });
  */
 export async function timingCheck(
 	apiCall: () => Promise<APIResponse<unknown>>,
 	maxAverageMs = 1000,
-	runs = 6
-): Promise<void> {
-	const times: number[] = [];
-	for (let i = 0; i < runs; i += 1) {
-		const started = Date.now();
+	{ runs = 5, warmup = 1 }: TimingOptions = {}
+): Promise<TimingResult> {
+	const durations: number[] = [];
+	const timeToFirstByte: number[] = [];
+	for (let i = 0; i < warmup + runs; i += 1) {
 		const response = await apiCall();
-		times.push(Date.now() - started);
+		const timing = response.timing();
 		await response.dispose();
+		if (i < warmup) {
+			continue;
+		}
+		// Fields are milliseconds relative to startTime, or -1 when not available.
+		const sent = Math.max(timing.requestStart, 0);
+		durations.push(timing.responseEnd - sent);
+		timeToFirstByte.push(timing.responseStart - sent);
 	}
-	const counted = times.slice(1);
-	const average = counted.reduce((sum, t) => sum + t, 0) / counted.length;
-	console.log(`Run times: ${times.join("ms, ")}ms. Average (excluding first): ${average.toFixed(0)}ms`);
-	expect.soft(average, `Average response time over ${counted.length} runs`).toBeLessThanOrEqual(maxAverageMs);
+
+	const average = (values: number[]) => values.reduce((sum, v) => sum + v, 0) / values.length;
+	const averageMs = average(durations);
+	const ms = (values: number[]) => values.map((v) => `${v.toFixed(0)}ms`).join(", ");
+	console.log(
+		`Response times (${warmup} warm-up call(s) excluded): ${ms(durations)}. Average ${averageMs.toFixed(0)}ms, ` +
+			`time to first byte average ${average(timeToFirstByte).toFixed(0)}ms`
+	);
+	expect.soft(averageMs, `Average response time over ${runs} calls`).toBeLessThanOrEqual(maxAverageMs);
+	return { averageMs, durations, timeToFirstByte };
 }

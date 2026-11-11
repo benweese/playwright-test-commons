@@ -25,7 +25,7 @@ flowchart LR
 
 ```bash
 npm install -D @playwright/test typescript
-npm install github:benweese/playwright-test-commons#v0.4.0
+npm install github:benweese/playwright-test-commons#v0.5.0
 ```
 
 npm installs from the git tag and runs the package's `prepare` script, which compiles it to `dist/` with type definitions. The test repo gets typed imports without compiling anything itself. `@playwright/test` (1.65 or later) is a peer dependency, so the test repo picks the Playwright version.
@@ -38,20 +38,20 @@ git config --global url."https://github.com/".insteadOf ssh://git@github.com/
 
 ## What's in it
 
-| Export                                                                    | What it does                                                                                                                                                                                       |
-| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ApiBase`                                                                 | Base class for one-client-per-API-area. Typed responses (`this.get<ProductList>(...)`), JSON or form bodies, per-request headers (for tokens set later), one reused request context, debug logging |
-| `getBody(response)`                                                       | Asserts 2xx, parses JSON, disposes the response. Returns the body type the client declared                                                                                                         |
-| `errorCheck(response, status, { schema })`                                | Asserts an error status and optionally the error body's shape                                                                                                                                      |
-| `timingCheck(call, maxAverageMs)`                                         | Average response time over several calls, ignoring the first                                                                                                                                       |
-| `pollUntil(call, condition)`                                              | Waits for eventually-consistent APIs without fixed sleeps                                                                                                                                          |
-| `validateJsonSchema(name, body)`                                          | Validates against `schemas/<name>.schema.json` (ajv + formats) and checks every date field                                                                                                         |
-| `createJsonSchema` / `UPDATE_SCHEMAS=true`                                | Generates a strict schema from a real response for review                                                                                                                                          |
-| `isIsoDate`, `expectValidDate`, `expectDateBetween`, `expectSortedByDate` | Date checks that reject impossible dates like Feb 30                                                                                                                                               |
-| `BasePage`                                                                | Page object base: `goto`, `click`, `fill`, `expectVisible`, `expectUrl`, ...                                                                                                                       |
-| `generateTestDescription({ id, description, tags })`, `TAGS`              | Test titles like `#0012 \| search filters results @ui`. The id is a number, unique across the repo, that ties each test to its written plan scenario. Tags, not ids, say what kind of test it is   |
-| `formatTestId(id)`                                                        | `12` → `#0012`, for plans and `--grep`                                                                                                                                                             |
-| Types                                                                     | `ApiBaseOptions`, `FetchOptions`, `LocatorFactory`, `ExpectOptions`, `Tag`, `TestDescription`, `DateOptions`, ... so test repos type their clients and page objects                                |
+| Export                                                                    | What it does                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ApiBase`                                                                 | Base class for one-client-per-API-area. Typed responses (`this.get<ProductList>(...)`), JSON or form bodies, per-request headers (for tokens set later), one reused request context, debug logging                        |
+| `getBody(response)`                                                       | Asserts 2xx, parses JSON, disposes the response. Returns the body type the client declared                                                                                                                                |
+| `errorCheck(response, status, { schema })`                                | Asserts an error status and optionally the error body's shape                                                                                                                                                             |
+| `timingCheck(call, maxAverageMs, { runs, warmup })`                       | Average response time from Playwright's resource timing (`response.timing()`): request sent → last byte, so DNS, TCP and TLS setup never count. Skips a warm-up call, reports time to first byte, and returns the numbers |
+| `pollUntil(call, condition)`                                              | Waits for eventually-consistent APIs without fixed sleeps                                                                                                                                                                 |
+| `validateJsonSchema(name, body)`                                          | Validates against `schemas/<name>.schema.json` (ajv + formats) and checks every date field                                                                                                                                |
+| `createJsonSchema` / `UPDATE_SCHEMAS=true`                                | Generates a strict schema from a real response for review                                                                                                                                                                 |
+| `isIsoDate`, `expectValidDate`, `expectDateBetween`, `expectSortedByDate` | Date checks that reject impossible dates like Feb 30                                                                                                                                                                      |
+| `BasePage`                                                                | Page object base: `goto`, `click`, `fill`, `expectVisible`, `expectUrl`, ...                                                                                                                                              |
+| `generateTestDescription({ id, description, tags })`, `TAGS`              | Test titles like `#0012 \| search filters results @ui`. The id is a number, unique across the repo, that ties each test to its written plan scenario. Tags, not ids, say what kind of test it is                          |
+| `formatTestId(id)`                                                        | `12` → `#0012`, for plans and `--grep`                                                                                                                                                                                    |
+| Types                                                                     | `ApiBaseOptions`, `FetchOptions`, `LocatorFactory`, `ExpectOptions`, `Tag`, `TestDescription`, `DateOptions`, ... so test repos type their clients and page objects                                                       |
 
 ## Example
 
@@ -116,7 +116,7 @@ npm run build            # compile to dist/
 
 TypeScript stays on 6.x until typescript-eslint supports 7. Dependabot keeps everything else current.
 
-Releases are git tags (`v0.4.0`). Test repos pin a tag and upgrade on purpose.
+Releases are git tags (`v0.5.0`). Test repos pin a tag and upgrade on purpose.
 
 ## License
 
