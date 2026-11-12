@@ -1,6 +1,6 @@
 {
 	"name": "@benweese/playwright-test-commons",
-	"version": "0.6.0",
+	"version": "0.7.0",
 	"description": "Reusable Playwright test framework layer in TypeScript: API client base class, response helpers, strict JSON schema and date validation, and a UI base page.",
 	"type": "module",
 	"main": "dist/index.js",
@@ -42,7 +42,8 @@
 		"prepare": "npm run build"
 	},
 	"peerDependencies": {
-		"@playwright/test": ">=1.65.0"
+		"@playwright/test": ">=1.65.0",
+		"@axe-core/playwright": ">=4.10.0"
 	},
 	"dependencies": {
 		"ajv": "^8.20.0",
@@ -51,6 +52,7 @@
 		"genson-js": "^0.0.8"
 	},
 	"devDependencies": {
+		"@axe-core/playwright": "^4.14.0",
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.65.0",
 		"@types/node": "^26.6.6",
@@ -68,5 +70,10 @@
 	},
 	"bin": {
 		"check-test-ids": "dist/bin/check-test-ids.js"
+	},
+	"peerDependenciesMeta": {
+		"@axe-core/playwright": {
+			"optional": true
+		}
 	}
 }

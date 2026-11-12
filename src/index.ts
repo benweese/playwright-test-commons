@@ -26,5 +26,9 @@ export {
 	validateDatesInBody
 } from "./validation/validateDates.js";
 export type { DateInput, DateOptions, DateCheckOptions } from "./validation/validateDates.js";
+export { uniqueEmail } from "./helpers/email.js";
+export type { UniqueEmailOptions } from "./helpers/email.js";
 export { BasePage } from "./ui/BasePage.js";
-export type { LocatorFactory, ExpectOptions } from "./ui/BasePage.js";
+export type { LocatorFactory, ExpectOptions, DialogInfo, DialogAction } from "./ui/BasePage.js";
+export { WCAG_AA_TAGS, scanA11y, expectNoA11yViolations } from "./ui/accessibility.js";
+export type { A11yOptions, A11yViolation } from "./ui/accessibility.js";

@@ -21,11 +21,24 @@ import { expect, type Locator, type Page, type Response } from "@playwright/test
  */
 export type LocatorFactory<L> = (page: Page) => L;
 
-/** Options for the visibility checks on {@link BasePage}. */
+/** Options for the checks on {@link BasePage}. */
 export interface ExpectOptions {
 	/** Soft (the test continues on failure) by default. Pass `false` when later steps depend on the check. */
 	soft?: boolean;
+	/** How long to wait, in milliseconds. Defaults to the project's `expect.timeout`. Raise it only for something known to be slow. */
+	timeout?: number;
 }
+
+/** A browser dialog (alert, confirm, prompt or beforeunload) the page opened. */
+export interface DialogInfo {
+	/** `"alert"`, `"confirm"`, `"prompt"` or `"beforeunload"`. */
+	type: string;
+	/** The dialog's text. */
+	message: string;
+}
+
+/** What to do with a dialog: accept it (OK) or dismiss it (Cancel). */
+export type DialogAction = "accept" | "dismiss";
 
 /**
  * Base class for page objects. Page methods call these helpers (`this.click`, `this.fill`, ...)
@@ -135,8 +148,12 @@ export class BasePage<L extends object = Record<string, Locator>> {
 	 * @param message - shown if the check fails
 	 * @param options - soft by default, so one run reports every failed check; see {@link ExpectOptions}
 	 */
-	async expectVisible(locator: Locator, message?: string, { soft = true }: ExpectOptions = {}): Promise<void> {
-		await (soft ? expect.soft : expect)(locator, message).toBeVisible();
+	async expectVisible(
+		locator: Locator,
+		message?: string,
+		{ soft = true, timeout }: ExpectOptions = {}
+	): Promise<void> {
+		await (soft ? expect.soft : expect)(locator, message).toBeVisible({ timeout });
 	}
 
 	/**
@@ -146,8 +163,193 @@ export class BasePage<L extends object = Record<string, Locator>> {
 	 * @param message - shown if the check fails
 	 * @param options - soft by default; see {@link ExpectOptions}
 	 */
-	async expectHidden(locator: Locator, message?: string, { soft = true }: ExpectOptions = {}): Promise<void> {
-		await (soft ? expect.soft : expect)(locator, message).toBeHidden();
+	async expectHidden(
+		locator: Locator,
+		message?: string,
+		{ soft = true, timeout }: ExpectOptions = {}
+	): Promise<void> {
+		await (soft ? expect.soft : expect)(locator, message).toBeHidden({ timeout });
+	}
+
+	/**
+	 * Asserts how many elements a locator matches.
+	 *
+	 * @param locator - matches zero or more elements
+	 * @param count - the expected number; `0` checks that none are on the page
+	 * @param message - shown if the check fails
+	 * @param options - soft by default; see {@link ExpectOptions}
+	 */
+	async expectCount(
+		locator: Locator,
+		count: number,
+		message?: string,
+		{ soft = true, timeout }: ExpectOptions = {}
+	): Promise<void> {
+		await (soft ? expect.soft : expect)(locator, message).toHaveCount(count, { timeout });
+	}
+
+	/**
+	 * Asserts a locator matches at least one element, e.g. that a results list isn't empty.
+	 *
+	 * @param locator - matches zero or more elements
+	 * @param message - shown if the check fails
+	 * @param options - soft by default; see {@link ExpectOptions}
+	 */
+	async expectAny(locator: Locator, message?: string, { soft = true, timeout }: ExpectOptions = {}): Promise<void> {
+		await (soft ? expect.soft : expect)(locator, message).not.toHaveCount(0, { timeout });
+	}
+
+	/**
+	 * Asserts a form control's current value.
+	 *
+	 * @param locator - the input, textarea or select
+	 * @param value - the expected value; `""` for an empty field
+	 * @param message - shown if the check fails
+	 * @param options - soft by default; see {@link ExpectOptions}
+	 */
+	async expectValue(
+		locator: Locator,
+		value: string | RegExp,
+		message?: string,
+		{ soft = true, timeout }: ExpectOptions = {}
+	): Promise<void> {
+		await (soft ? expect.soft : expect)(locator, message).toHaveValue(value, { timeout });
+	}
+
+	/**
+	 * Asserts a form control fails the browser's own validation (`required`, `type="email"`, ...),
+	 * i.e. its `validationMessage` is not empty. The wording differs per browser and language, so
+	 * it is never compared.
+	 *
+	 * @param locator - the input, select or textarea
+	 * @param message - shown if the check fails
+	 * @param options - soft by default; see {@link ExpectOptions}
+	 */
+	async expectInvalid(
+		locator: Locator,
+		message?: string,
+		{ soft = true, timeout }: ExpectOptions = {}
+	): Promise<void> {
+		await (soft ? expect.soft : expect)(locator, message).not.toHaveJSProperty("validationMessage", "", {
+			timeout
+		});
+	}
+
+	/**
+	 * Asserts the names of the files chosen in a file input.
+	 *
+	 * @param locator - the `<input type="file">`
+	 * @param names - the expected file names, in order; `[]` for none
+	 * @param message - shown if the check fails
+	 */
+	async expectFilesAttached(locator: Locator, names: string[], message?: string): Promise<void> {
+		await expect.soft
+			.poll(
+				() =>
+					locator.evaluate((input) =>
+						Array.from((input as HTMLInputElement).files ?? [], (file) => file.name)
+					),
+				{ message }
+			)
+			.toEqual(names);
+	}
+
+	/**
+	 * Asserts (soft) the page's title.
+	 *
+	 * @param title - the full title, or a pattern
+	 */
+	async expectTitle(title: string | RegExp): Promise<void> {
+		await expect.soft(this.page).toHaveTitle(title);
+	}
+
+	/**
+	 * Reloads the page. Waits for `domcontentloaded`, like {@link BasePage.goto}.
+	 *
+	 * @returns the main resource response, or null (see Playwright's `page.reload`)
+	 */
+	async reload(): Promise<Response | null> {
+		return this.page.reload({ waitUntil: "domcontentloaded" });
+	}
+
+	/**
+	 * Waits for the page's `load` event. {@link BasePage.goto} only waits for `domcontentloaded`, so
+	 * use this before acting on a control whose handler is bound by a script at the end of the
+	 * page: until that script runs, the control is visible but a click does nothing.
+	 */
+	async waitForLoad(): Promise<void> {
+		await this.page.waitForLoadState("load");
+	}
+
+	/**
+	 * Clicks an element and waits for the response it triggers, for actions whose only visible
+	 * result comes after a request (an item removed, a list refreshed).
+	 *
+	 * @param locator - the element to click
+	 * @param url - the response to wait for: a URL, a pattern, or a predicate
+	 * @returns the response
+	 *
+	 * @example
+	 * await this.clickAndWaitForResponse(this.locators.removeButton(name), (r) => r.url().endsWith(`/delete_cart/${id}`));
+	 */
+	async clickAndWaitForResponse(
+		locator: Locator,
+		url: string | RegExp | ((response: Response) => boolean | Promise<boolean>)
+	): Promise<Response> {
+		const response = this.page.waitForResponse(url);
+		await this.click(locator);
+		return response;
+	}
+
+	/**
+	 * Chooses files in a file input.
+	 *
+	 * @param locator - the `<input type="file">`
+	 * @param files - one path or several; `[]` clears the input
+	 */
+	async uploadFiles(locator: Locator, files: string | string[]): Promise<void> {
+		await locator.setInputFiles(files);
+	}
+
+	/**
+	 * Clicks an element that opens a browser dialog, answers the dialog and returns what it said.
+	 * Fails if no dialog opens within the action timeout.
+	 *
+	 * @param locator - the element to click
+	 * @param action - accept (OK) or dismiss (Cancel). Default `"accept"`
+	 * @param promptText - the text to enter when accepting a prompt
+	 * @returns the dialog's type and message
+	 *
+	 * @example
+	 * const dialog = await this.clickAndHandleDialog(this.locators.submitButton, "dismiss");
+	 */
+	async clickAndHandleDialog(
+		locator: Locator,
+		action: DialogAction = "accept",
+		promptText?: string
+	): Promise<DialogInfo> {
+		const handled = this.page.waitForEvent("dialog").then(async (dialog) => {
+			await (action === "accept" ? dialog.accept(promptText) : dialog.dismiss());
+			return { type: dialog.type(), message: dialog.message() };
+		});
+		await this.click(locator);
+		return handled;
+	}
+
+	/**
+	 * From now on, dismisses every dialog the page opens and records its message, for checking
+	 * later that none opened. Without a listener Playwright dismisses dialogs silently, so they
+	 * would go unnoticed.
+	 *
+	 * @returns a list that fills as dialogs open; assert it is empty when no dialog was expected
+	 */
+	recordDialogs(): string[] {
+		const messages: string[] = [];
+		this.page.on("dialog", (dialog) => {
+			messages.push(dialog.message());
+			void dialog.dismiss();
+		});
+		return messages;
 	}
 
 	/**
