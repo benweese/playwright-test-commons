@@ -226,13 +226,21 @@ dist/                             build output (git-ignored; built on install by
 ## Design decisions
 
 - **No work at import time.** Importing the package makes no network or file calls, so tools that only import it never pay for (or fail on) setup.
+  _Tradeoff:_ setup such as `configureSchemas` is a call the test repo must remember to make; until it does, schemas are read from `<cwd>/schemas`.
 - **No site values or config.** URLs, settings and test data live in the test repo, which is what lets one framework serve several sites.
+  _Tradeoff:_ each test repo writes its own config and clients, so two repos for the same site repeat that code.
 - **Curated exports.** A file is public only once `src/index.ts` exports it, which keeps the API deliberate.
+  _Tradeoff:_ a useful internal helper stays out of reach until someone exports it, and every export becomes a promise to keep.
 - **Types flow from the client.** A response type is named once, in the client method, and Playwright's `APIResponse<T>` carries it to every helper. Specs never repeat it.
+  _Tradeoff:_ the type is a claim, not a check: only `validateJsonSchema` proves the body really has that shape at runtime. It also requires Playwright 1.65+.
 - **Strict generated schemas.** `additionalProperties: false` on every object, so a new or renamed field fails until someone updates the schema on purpose. Generate once, review, commit.
+  _Tradeoff:_ a harmless new field fails tests too, so schemas need updating whenever the API grows.
 - **Dates checked for free.** Every schema validation also checks date-like fields (`*At`, `*Date`, `*_at`, ...) and rejects impossible dates.
+  _Tradeoff:_ the check goes by key name, so a date under another name is missed and a non-date under a date-like name is flagged; `dateKeys` and `checkDates: false` cover both.
 - **Soft assertions for property checks**, so one run reports every mismatch instead of stopping at the first. Pass `{ soft: false }` where later steps depend on a check.
+  _Tradeoff:_ a test keeps running after a failed check, so a later step can fail for a reason that started earlier; read the first error first.
 - **Honest timings.** `timingCheck` uses Playwright's resource timing, so DNS, TCP and TLS setup never count against the API.
+  _Tradeoff:_ the numbers show server and transfer time, not what a user on a cold connection waits.
 
 ## Development
 
