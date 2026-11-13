@@ -277,8 +277,13 @@ src/
   tools/checkTestIds.ts           the id rules behind check-test-ids
   bin/check-test-ids.ts           the check-test-ids command
   index.ts                        the public API: only what is exported here is public
-test/                             unit tests (run by Playwright, no browser) and typing.check.ts (compile-time checks)
+test/                             unit tests, run by Playwright; typing.check.ts holds compile-time checks
+  ui/                             BasePage and accessibility tests (Chromium)
+  support/server.ts               local HTTP server the API tests call
+  failurePaths.spec.ts            runs fixtures/failing and checks each failure's message
+  fixtures/                       suites other tests run on purpose; the normal run skips them
 dist/                             build output (git-ignored; built on install by the prepare script)
+CHANGELOG.md                      every release; the release workflow takes its notes from here
 ```
 
 ## Design decisions
@@ -304,15 +309,24 @@ dist/                             build output (git-ignored; built on install by
 
 ```bash
 npm install
-npm run lint             # ESLint (including JSDoc rules) + TypeScript type-check
-npx playwright test      # unit tests; no browser needed
-npm run build            # compile to dist/
-npm run format           # Prettier
+npx playwright install chromium   # once; the BasePage and accessibility tests use it
+npm run lint                      # ESLint (including JSDoc rules) + TypeScript type-check
+npx playwright test               # unit tests
+npm run test:coverage             # unit tests with a coverage report (text, and coverage/lcov-report/)
+npm run docs                      # API docs to docs-site/ with TypeDoc; fails on any warning
+npm run build                     # compile to dist/
+npm run format                    # Prettier
 ```
 
 Developing commons needs Node 22.22.2+ on 22.x, or 24.15+, the range `eslint-plugin-jsdoc` supports. Installing it in a test repo needs only Node 20.
 
-CI (`.github/workflows/ci.yml`) runs lint, the Prettier check, the unit tests and the build on every push and pull request.
+**Tests:** every export has unit tests, including failure paths. A failing soft check fails the test it runs in, so the failing checks live in `test/fixtures/failing` and `failurePaths.spec.ts` runs them in a separate Playwright run, then checks that each one failed with the expected message. Coverage is reported (c8, in the CI job summary), not enforced with a threshold.
+
+**Workflows:**
+
+- `ci.yml`: lint, the Prettier check, unit tests with coverage, and the build, on every push and pull request
+- `docs.yml`: builds the TypeDoc site and deploys it to GitHub Pages on every push to `main`. Only the deploy job has `pages: write` and `id-token: write`
+- `release.yml`: on a `v*` tag, runs CI, checks the tag matches `package.json`, and creates a GitHub release with that version's section of `CHANGELOG.md`
 
 **Documentation:** every export needs JSDoc (summary, parameters, return value, errors, and an example where useful). Lint fails on an undocumented export or a `@param` that doesn't match.
 
@@ -320,8 +334,16 @@ CI (`.github/workflows/ci.yml`) runs lint, the Prettier check, the unit tests an
 
 - TypeScript is held at 6.x until typescript-eslint supports 7.
 - `package.json` overrides `minimatch` to 11.x to fix [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) in ESLint's dependencies. Remove the override once ESLint and typescript-eslint require minimatch 11 themselves.
+    - TypeDoc breaks on minimatch 11, so a nested override keeps 10.x for TypeDoc alone, and `npm audit` reports that one. The advisory needs attacker-controlled glob patterns, and TypeDoc only reads the patterns in `typedoc.json`. Drop the nested override once TypeDoc supports minimatch 11.
+- `package.json` overrides `glob` to 14.x to fix [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) in c8's dependencies (test-exclude asks for 13.x, and no 13.x release is fixed). Remove it once test-exclude allows glob 14.
 
-**Releasing:** bump `version` in `package.json`, push to `main`, then tag it (`git tag -a v0.6.1 -m v0.6.1 && git push origin v0.6.1`). Test repos pin a tag and upgrade on purpose.
+**Releasing:**
+
+1. Move the `[Unreleased]` entries in `CHANGELOG.md` under a new `## [x.y.z] - YYYY-MM-DD` heading and update the links at the bottom.
+2. Bump `version` in `package.json` and the install tag in this README, then push to `main`.
+3. Tag and push: `git tag -a v0.8.0 -m v0.8.0 && git push origin v0.8.0`. The release workflow creates the GitHub release.
+
+Test repos pin a tag and upgrade on purpose.
 
 ## License
 
