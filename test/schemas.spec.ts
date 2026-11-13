@@ -31,6 +31,32 @@ test.describe.serial("JSON schemas", () => {
 		await validateJsonSchema("items/item", { id: 2, tags: [], owner: { name: "y" }, deletedAt: "2026-01-31" });
 	});
 
+	test("update: true regenerates the schema from the body, and the cached validator follows", async () => {
+		await validateJsonSchema(
+			"items/item",
+			{ id: 5, tags: [], owner: { name: "z" }, deletedAt: null, extra: 1 },
+			{
+				update: true
+			}
+		);
+		const schema = JSON.parse(await readFile(path.join(schemasDir, "items/item.schema.json"), "utf8"));
+		expect(Object.keys(schema.properties)).toContain("extra");
+		await createJsonSchema(schemasDir, "items/item", { id: 1, tags: ["a"], owner: { name: "x" }, deletedAt: null });
+		configureSchemas(); // clears the cache, so the restored schema is read again
+	});
+
+	test("dateOptions from configureSchemas apply to every validation; checkDates: false skips them", async () => {
+		await createJsonSchema(schemasDir, "events/event", { startDate: "31/01/2026" });
+		configureSchemas({ dateOptions: { format: "DD/MM/YYYY" } });
+		try {
+			await validateJsonSchema("events/event", { startDate: "28/02/2026" });
+			configureSchemas({ dateOptions: {} });
+			await validateJsonSchema("events/event", { startDate: "28/02/2026" }, { checkDates: false });
+		} finally {
+			configureSchemas({ dateOptions: {} });
+		}
+	});
+
 	test("validateJsonSchema fails on an unexpected field", async () => {
 		test.fail(); // expected: additionalProperties: false rejects "extra"
 		await validateJsonSchema("items/item", { id: 3, tags: [], owner: { name: "z" }, deletedAt: null, extra: true });
