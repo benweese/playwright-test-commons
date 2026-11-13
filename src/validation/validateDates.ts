@@ -112,6 +112,7 @@ export function expectDateBetween(
  * @param items - the items, in the order received
  * @param key - the date field on each item
  * @param order - `"desc"` (newest first) or `"asc"`. Default `"desc"`
+ * @param options - how the dates are written
  * @param options.format - dayjs format of the dates. Default: ISO 8601
  *
  * @example

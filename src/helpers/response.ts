@@ -33,6 +33,7 @@ export async function getBody<T>(response: APIResponse<T>): Promise<T> {
  *
  * @param response - the response to check
  * @param status - the expected HTTP status, e.g. 404
+ * @param options - optional checks on the error body
  * @param options.schema - schema name for the error body, e.g. `"errors/error"`
  * @returns the body: parsed JSON if it is JSON, otherwise the raw text
  *
