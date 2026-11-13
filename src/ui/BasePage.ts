@@ -313,7 +313,8 @@ export class BasePage<L extends object = Record<string, Locator>> {
 
 	/**
 	 * Clicks an element that opens a browser dialog, answers the dialog and returns what it said.
-	 * Fails if no dialog opens within the action timeout.
+	 * If no dialog opens, it waits for the project's `actionTimeout`, or the test timeout when no
+	 * `actionTimeout` is set (Playwright's default), then fails.
 	 *
 	 * @param locator - the element to click
 	 * @param action - accept (OK) or dismiss (Cancel). Default `"accept"`
