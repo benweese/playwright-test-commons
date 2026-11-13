@@ -11,7 +11,7 @@
 import { expect } from "@playwright/test";
 import { readFile } from "fs/promises";
 import path from "path";
-import { Ajv, type ValidateFunction } from "ajv";
+import { Ajv, type ErrorObject, type ValidateFunction } from "ajv";
 import addFormatsModule from "ajv-formats";
 import { createJsonSchema, schemaFilePath } from "./createJsonSchema.js";
 import { validateDatesInBody, type DateOptions } from "./validateDates.js";
@@ -68,6 +68,49 @@ async function loadValidator(name: string): Promise<ValidateFunction> {
 	return validate;
 }
 
+/** The keys in a JSON pointer: `/items/0/price` → `["items", "0", "price"]`. */
+function pointerKeys(pointer: string): string[] {
+	return pointer
+		.split("/")
+		.slice(1)
+		.map((key) => key.replace(/~1/g, "/").replace(/~0/g, "~"));
+}
+
+/** Turns a JSON pointer such as `/items/0/price` into `body.items[0].price`. */
+function fieldPath(pointer: string): string {
+	return pointerKeys(pointer).reduce(
+		(path, key) => (/^\d+$/.test(key) ? `${path}[${key}]` : `${path}.${key}`),
+		"body"
+	);
+}
+
+/** The value a JSON pointer points to in `body`, or undefined. */
+function valueAt(body: unknown, pointer: string): unknown {
+	return pointerKeys(pointer).reduce<unknown>(
+		(value, key) =>
+			value !== null && typeof value === "object" ? (value as Record<string, unknown>)[key] : undefined,
+		body
+	);
+}
+
+/**
+ * One schema error as a line a person can act on, e.g. `body.items[0].price: must be number, got "12.50"`
+ * or `body: unexpected field "extra"`.
+ */
+function describeSchemaError(error: ErrorObject, body: unknown): string {
+	const where = fieldPath(error.instancePath);
+	switch (error.keyword) {
+		case "additionalProperties":
+			return `${where}: unexpected field "${String(error.params.additionalProperty)}"`;
+		case "required":
+			return `${where}: missing field "${String(error.params.missingProperty)}"`;
+		case "enum":
+			return `${where}: must be one of ${JSON.stringify(error.params.allowedValues)}, got ${JSON.stringify(valueAt(body, error.instancePath))}`;
+		default:
+			return `${where}: ${error.message ?? error.keyword}, got ${JSON.stringify(valueAt(body, error.instancePath))}`;
+	}
+}
+
 /** Settings for {@link validateJsonSchema}. */
 export interface ValidateOptions {
 	/** Generate the schema from this body first. For new endpoints only; never commit it. Default `false`. */
@@ -78,7 +121,8 @@ export interface ValidateOptions {
 
 /**
  * Asserts (soft) that a body matches its schema, and that every date-like field holds a valid
- * date. Every mismatch is logged, not just the first.
+ * date. The failure lists every mismatch, one line each, e.g. `body.items[0].price: must be
+ * number, got "12.50"` or `body: unexpected field "extra"`.
  *
  * For a new endpoint, run once with `{ update: true }` (or `UPDATE_SCHEMAS=true` for a whole
  * run) to generate the schema from the real response. Review it, commit it, then remove the
@@ -104,11 +148,8 @@ export async function validateJsonSchema(
 	}
 
 	const validate = await loadValidator(name);
-	const valid = validate(body);
-	if (!valid) {
-		console.error(`Schema "${name}" errors:\n${JSON.stringify(validate.errors, null, 2)}`);
-	}
-	expect.soft(valid, `Response matches schema "${name}"`).toBe(true);
+	const problems = validate(body) ? [] : (validate.errors ?? []).map((error) => describeSchemaError(error, body));
+	expect.soft(problems, `Response matches schema "${name}"`).toEqual([]);
 
 	if (checkDates) {
 		validateDatesInBody(body, settings.dateOptions);
