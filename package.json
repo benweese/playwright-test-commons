@@ -1,6 +1,6 @@
 {
 	"name": "@benweese/playwright-test-commons",
-	"version": "0.7.0",
+	"version": "0.8.0",
 	"description": "Reusable Playwright test framework layer in TypeScript: API client base class, response helpers, strict JSON schema and date validation, and a UI base page.",
 	"type": "module",
 	"main": "dist/index.js",

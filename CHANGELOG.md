@@ -5,9 +5,20 @@ All notable changes to this project are documented here. The format is based on
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Before 1.0.0, a minor version may
 include breaking changes; they are listed under **Breaking**.
 
-Test repos install a tag: `npm install github:benweese/playwright-test-commons#v0.7.0`.
+Test repos install a tag: `npm install github:benweese/playwright-test-commons#v0.8.0`.
 
 ## [Unreleased]
+
+## [0.8.0] - 2026-11-12
+
+### Added
+
+- Unit tests for every export, including failure paths whose messages are checked in a separate
+  Playwright run, and an end-to-end test of the `check-test-ids` command.
+- Coverage report in CI (c8), shown in the job summary.
+- API documentation generated with TypeDoc and published to GitHub Pages.
+- Release workflow: a `v*` tag runs CI and creates a GitHub release from this changelog. The
+  API docs are published from `main`.
 
 ### Changed
 
@@ -20,15 +31,14 @@ Test repos install a tag: `npm install github:benweese/playwright-test-commons#v
 
 - `BasePage.clickAndHandleDialog` JSDoc said it gives up after the action timeout; with no
   `actionTimeout` set it waits for the test timeout.
+- The `options` descriptions of `errorCheck` and `expectSortedByDate` were missing from the
+  generated docs.
 
-### Added
+### Security
 
-- Unit tests for every export, including failure paths whose messages are checked in a separate
-  Playwright run, and an end-to-end test of the `check-test-ids` command.
-- Coverage report in CI (c8), shown in the job summary.
-- API documentation generated with TypeDoc and published to GitHub Pages.
-- Release workflow: a `v*` tag runs CI, creates a GitHub release from this changelog and
-  publishes the API docs.
+- Override `glob` to 14.x to fix
+  [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) in c8's dependencies
+  (dev tooling only).
 
 ## [0.7.0] - 2026-11-12
 
@@ -113,7 +123,8 @@ Test repos install a tag: `npm install github:benweese/playwright-test-commons#v
 - `BasePage`, whose `goto` waits for `domcontentloaded`.
 - `createConfig`, `generateTestDescription` and `TAGS`.
 
-[Unreleased]: https://github.com/benweese/playwright-test-commons/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/benweese/playwright-test-commons/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/benweese/playwright-test-commons/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/benweese/playwright-test-commons/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/benweese/playwright-test-commons/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/benweese/playwright-test-commons/compare/v0.5.0...v0.5.1

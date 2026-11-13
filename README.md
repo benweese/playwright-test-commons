@@ -37,7 +37,7 @@ flowchart LR
 
 ```bash
 npm install -D @playwright/test typescript
-npm install github:benweese/playwright-test-commons#v0.7.0
+npm install github:benweese/playwright-test-commons#v0.8.0
 ```
 
 npm installs from the git tag and runs the package's `prepare` script, which compiles it to `dist/` with type definitions, so the test repo gets typed imports without compiling anything itself.
