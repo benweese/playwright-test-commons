@@ -1,11 +1,11 @@
 # playwright-test-commons
 
 [![CI](https://github.com/benweese/playwright-test-commons/actions/workflows/ci.yml/badge.svg)](https://github.com/benweese/playwright-test-commons/actions/workflows/ci.yml)
-[![API docs](https://img.shields.io/badge/API_docs-TypeDoc-blue)](https://benweese.github.io/playwright-test-commons/)
+[![API docs](https://img.shields.io/badge/API_docs-TypeDoc-blue)](https://code.benweese.com/playwright-test-commons/)
 
 The reusable TypeScript layer under my Playwright test suites: a base class for API clients with typed responses, response and timing helpers, strict JSON schema validation with automatic date checks, and a base page object. It holds no site-specific values, so any test repo can install it and point it at its own site.
 
-**[API documentation](https://benweese.github.io/playwright-test-commons/)** (TypeDoc, generated from the JSDoc) · **[Changelog](CHANGELOG.md)**
+**[API documentation](https://code.benweese.com/playwright-test-commons/)** (TypeDoc, generated from the JSDoc) · **[Changelog](CHANGELOG.md)**
 
 ## How it fits
 
@@ -239,7 +239,7 @@ Otherwise it prints the number of ids and the highest one, which is where the ne
 | `check-test-ids [config]` (command)                                                                                                                                                                                                                                                                                                                  | Fails on a missing id, a duplicate id or a test no project runs (see above)                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | Types: `ApiBaseOptions`, `BodyType`, `Headers`, `FetchOptions`, `LocatorFactory`, `ExpectOptions`, `DialogInfo`, `DialogAction`, `A11yOptions`, `A11yViolation`, `UniqueEmailOptions`, `Tag`, `TestDescription`, `TimingOptions`, `TimingResult`, `PollOptions`, `SchemaSettings`, `ValidateOptions`, `DateOptions`, `DateCheckOptions`, `DateInput` | For typing clients, page objects and options in the test repo                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
-Every export has JSDoc, so editors show the full description, parameters and examples on hover. The same JSDoc is published as the [API documentation](https://benweese.github.io/playwright-test-commons/).
+Every export has JSDoc, so editors show the full description, parameters and examples on hover. The same JSDoc is published as the [API documentation](https://code.benweese.com/playwright-test-commons/).
 
 ## Used by
 
