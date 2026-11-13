@@ -202,6 +202,25 @@ Otherwise it prints the number of ids and the highest one, which is where the ne
 
 Every export has JSDoc, so editors show the full description, parameters and examples on hover.
 
+## Used by
+
+[playwright-e2e-demo](https://github.com/benweese/playwright-e2e-demo), a real API and UI suite for automationexercise.com, uses commons throughout. Links are pinned to commit [`69164e9`](https://github.com/benweese/playwright-e2e-demo/tree/69164e9aa7bba2731a4958c28c9d18f47119703d):
+
+| Utility                                                  | Where it is used                                                                                                                                                                                                                                                                                                     |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ApiBase`, typed responses                               | [api/ProductsClient.ts](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/api/ProductsClient.ts#L11-L18): a client with `bodyType: "form"` and `this.get<ProductList>(...)`                                                                                              |
+| `configureSchemas`                                       | [config/index.ts](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/config/index.ts#L42)                                                                                                                                                                                 |
+| `getBody`                                                | [helpers/apiResponse.ts](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/helpers/apiResponse.ts#L27): wrapped for an API that returns HTTP 200 with the real status in the body                                                                                        |
+| `validateJsonSchema`                                     | [tests/api/products/products.spec.ts](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/tests/api/products/products.spec.ts#L15)                                                                                                                                         |
+| `generateTestDescription`, `TAGS`                        | [tests/smoke/site-up.spec.ts](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/tests/smoke/site-up.spec.ts#L11-L21)                                                                                                                                                     |
+| `BasePage`                                               | [tests/ui/pages/LoginPage.ts](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/tests/ui/pages/LoginPage.ts#L6), and every page object in [tests/ui/pages](https://github.com/benweese/playwright-e2e-demo/tree/69164e9aa7bba2731a4958c28c9d18f47119703d/tests/ui/pages) |
+| `clickAndHandleDialog`, `recordDialogs`, `expectInvalid` | [tests/ui/pages/ContactPage.ts](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/tests/ui/pages/ContactPage.ts#L110-L138)                                                                                                                                               |
+| `expectNoA11yViolations`                                 | [tests/ui/specs/a11y.spec.ts](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/tests/ui/specs/a11y.spec.ts#L23)                                                                                                                                                         |
+| `uniqueEmail`                                            | [payloads/accountPayload.ts](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/payloads/accountPayload.ts#L43)                                                                                                                                                           |
+| `check-test-ids`                                         | [package.json](https://github.com/benweese/playwright-e2e-demo/blob/69164e9aa7bba2731a4958c28c9d18f47119703d/package.json#L20)                                                                                                                                                                                       |
+
+The demo doesn't use `errorCheck`, `pollUntil`, `timingCheck` or the standalone date checks yet; the unit tests in [test/](test/) show them.
+
 ## Layout
 
 ```
