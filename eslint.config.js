@@ -5,7 +5,17 @@ import jsdoc from "eslint-plugin-jsdoc";
 import prettier from "eslint-config-prettier";
 
 export default tseslint.config(
-	{ ignores: ["**/node_modules/**", "dist/**", "**/test-results/**", "**/playwright-report/**", ".tmp/**"] },
+	{
+		ignores: [
+			"**/node_modules/**",
+			"dist/**",
+			"**/test-results/**",
+			"**/playwright-report/**",
+			".tmp/**",
+			"coverage/**",
+			"docs-site/**"
+		]
+	},
 	js.configs.recommended,
 	...tseslint.configs.recommended,
 	{

@@ -1,0 +1,18 @@
+{
+	"$schema": "https://typedoc.org/schema.json",
+	"entryPoints": ["src/index.ts"],
+	"tsconfig": "tsconfig.json",
+	"out": "docs-site",
+	"name": "playwright-test-commons",
+	"readme": "none",
+	"includeVersion": true,
+	"excludePrivate": true,
+	"excludeInternal": true,
+	"sort": ["kind", "instance-first", "alphabetical-ignoring-documents"],
+	"navigationLinks": {
+		"GitHub": "https://github.com/benweese/playwright-test-commons",
+		"Changelog": "https://github.com/benweese/playwright-test-commons/blob/main/CHANGELOG.md"
+	},
+	"sourceLinkTemplate": "https://github.com/benweese/playwright-test-commons/blob/{gitRevision}/{path}#L{line}",
+	"treatWarningsAsErrors": true
+}

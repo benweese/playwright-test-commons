@@ -34,6 +34,7 @@
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
+		"docs": "typedoc",
 		"typecheck": "tsc -p tsconfig.check.json",
 		"test": "playwright test",
 		"test:coverage": "c8 playwright test",
@@ -63,13 +64,17 @@
 		"eslint-plugin-jsdoc": "^65.4.5",
 		"globals": "^17.14.0",
 		"prettier": "^3.9.10",
+		"typedoc": "^0.28.20",
 		"typescript": "~6.0",
 		"typescript-eslint": "^8.72.2"
 	},
 	"types": "dist/index.d.ts",
 	"overrides": {
 		"minimatch": "^11.0.7",
-		"glob": "^14.0.2"
+		"glob": "^14.0.2",
+		"typedoc": {
+			"minimatch": "^10.2.5"
+		}
 	},
 	"bin": {
 		"check-test-ids": "dist/bin/check-test-ids.js"
