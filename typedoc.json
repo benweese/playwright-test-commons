@@ -10,6 +10,8 @@
 	"excludeInternal": true,
 	"sort": ["kind", "instance-first", "alphabetical-ignoring-documents"],
 	"navigationLinks": {
+		"benweese.com": "https://benweese.com/",
+		"All projects": "https://code.benweese.com/",
 		"GitHub": "https://github.com/benweese/playwright-test-commons",
 		"Changelog": "https://github.com/benweese/playwright-test-commons/blob/main/CHANGELOG.md"
 	},
