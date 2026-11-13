@@ -7,6 +7,8 @@ The reusable TypeScript layer under my Playwright test suites: a base class for 
 
 **[API documentation](https://code.benweese.com/playwright-test-commons/)** (TypeDoc, generated from the JSDoc) · **[Changelog](CHANGELOG.md)**
 
+By **[Ben Weese](https://benweese.com/)** · more projects at **[code.benweese.com](https://code.benweese.com/)**
+
 ## How it fits
 
 It is one of three repos that work together:
