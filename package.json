@@ -68,7 +68,8 @@
 	},
 	"types": "dist/index.d.ts",
 	"overrides": {
-		"minimatch": "^11.0.7"
+		"minimatch": "^11.0.7",
+		"glob": "^14.0.2"
 	},
 	"bin": {
 		"check-test-ids": "dist/bin/check-test-ids.js"
