@@ -4,6 +4,7 @@ on:
     push:
         branches: [main]
     pull_request:
+    workflow_call: # the release workflow runs the same checks before releasing
 
 permissions:
     contents: read
@@ -18,7 +19,23 @@ jobs:
                   node-version-file: .nvmrc
                   cache: npm
             - run: npm ci
+            - run: npx playwright install --with-deps chromium # BasePage and accessibility tests
             - run: npm run lint # ESLint + type-check
             - run: npx prettier --check .
-            - run: npx playwright test
+            - run: npm run test:coverage
+            - name: Coverage summary
+              if: ${{ !cancelled() && hashFiles('coverage/coverage-summary.json') != '' }}
+              run: |
+                  node -e '
+                    const { total } = require("./coverage/coverage-summary.json");
+                    const rows = ["lines", "statements", "functions", "branches"]
+                      .map((k) => `| ${k} | ${total[k].pct}% | ${total[k].covered}/${total[k].total} |`);
+                    console.log(["### Coverage of src/", "", "| | % | covered |", "|---|---|---|", ...rows].join("\n"));
+                  ' >> "$GITHUB_STEP_SUMMARY"
+            - uses: actions/upload-artifact@v4
+              if: ${{ !cancelled() && hashFiles('coverage/lcov.info') != '' }}
+              with:
+                  name: coverage
+                  path: coverage/
+                  retention-days: 14
             - run: npm run build
