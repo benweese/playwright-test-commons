@@ -32,7 +32,7 @@ jobs:
                       .map((k) => `| ${k} | ${total[k].pct}% | ${total[k].covered}/${total[k].total} |`);
                     console.log(["### Coverage of src/", "", "| | % | covered |", "|---|---|---|", ...rows].join("\n"));
                   ' >> "$GITHUB_STEP_SUMMARY"
-            - uses: actions/upload-artifact@v4
+            - uses: actions/upload-artifact@v7
               if: ${{ !cancelled() && hashFiles('coverage/lcov.info') != '' }}
               with:
                   name: coverage
