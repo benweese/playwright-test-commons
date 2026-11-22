@@ -13,16 +13,16 @@ By **[Ben Weese](https://benweese.com/)** · more projects at **[code.benweese.c
 
 It is one of three repos that work together:
 
-| Repo                                                                           | Role                                                                                                         |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| **playwright-test-commons** (this repo)                                        | Shared framework code, versioned with git tags                                                               |
-| [playwright-ai-qa-agents](https://github.com/benweese/playwright-ai-qa-agents) | Claude Code plugin whose agents plan, write, run and heal tests                                              |
-| [playwright-e2e-demo](https://github.com/benweese/playwright-e2e-demo)         | A real API and UI suite for [automationexercise.com](https://automationexercise.com), built on the other two |
+| Repo                                                                       | Role                                                                                                         |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **playwright-test-commons** (this repo)                                    | Shared framework code, versioned with git tags                                                               |
+| [claude-plugins](https://github.com/benweese/claude-plugins) (`qa` plugin) | Claude Code plugin whose agents plan, write, run and heal tests                                              |
+| [playwright-e2e-demo](https://github.com/benweese/playwright-e2e-demo)     | A real API and UI suite for [automationexercise.com](https://automationexercise.com), built on the other two |
 
 ```mermaid
 flowchart LR
     commons["playwright-test-commons<br/>ApiBase · getBody · validateJsonSchema · BasePage"]
-    agents["playwright-ai-qa-agents<br/>planner · generator · healer agents"]
+    agents["claude-plugins (qa plugin)<br/>planner · generator · healer agents"]
     demo["playwright-e2e-demo<br/>clients · page objects · specs · plans"]
     commons -- "npm git dependency (tagged)" --> demo
     agents -- "Claude Code plugin marketplace" --> demo
